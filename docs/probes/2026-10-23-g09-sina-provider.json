@@ -1,0 +1,94 @@
+{
+  "mainlandAccessVerified" : false,
+  "results" : [ {
+    "instrument" : {
+      "schemaVersion" : "1.0.0",
+      "instrumentId" : "STOCK:SINA:NASDAQ:AAPL:USD",
+      "instrumentType" : "STOCK",
+      "symbol" : "AAPL",
+      "exchange" : "NASDAQ",
+      "provider" : "SINA",
+      "quoteCurrency" : "USD",
+      "priceUnit" : "CURRENCY_PER_SHARE",
+      "exchangeTimezone" : "America/New_York",
+      "calendarId" : "US_EQUITIES_CORE",
+      "calendarVersion" : "us-core-2026-v1",
+      "proxyFor" : null,
+      "adjustment" : "UNKNOWN",
+      "adjustmentDescription" : "默认序列按 AKShare 文档为未复权；尚未核实实际窗口复权与公司行动，保持 UNKNOWN"
+    },
+    "source" : "https://finance.sina.com.cn/staticdata/us/AAPL",
+    "retrievedAt" : "2026-10-23T12:01:06.974Z",
+    "sampleCount" : 84,
+    "firstSession" : "2026-06-25",
+    "lastSession" : "2026-10-22",
+    "adjustmentVerified" : false,
+    "corporateActionsVerified" : false,
+    "permissions" : {
+      "localDisplay" : "UNKNOWN",
+      "modelInput" : "UNKNOWN",
+      "storagePolicy" : "METADATA_ONLY"
+    }
+  }, {
+    "instrument" : {
+      "schemaVersion" : "1.0.0",
+      "instrumentId" : "ETF:SINA:NYSE_ARCA:GLD:USD",
+      "instrumentType" : "ETF",
+      "symbol" : "GLD",
+      "exchange" : "NYSE_ARCA",
+      "provider" : "SINA",
+      "quoteCurrency" : "USD",
+      "priceUnit" : "CURRENCY_PER_SHARE",
+      "exchangeTimezone" : "America/New_York",
+      "calendarId" : "US_EQUITIES_CORE",
+      "calendarVersion" : "us-core-2026-v1",
+      "proxyFor" : "GOLD",
+      "adjustment" : "UNKNOWN",
+      "adjustmentDescription" : "默认序列按 AKShare 文档为未复权；尚未核实实际窗口复权与公司行动，保持 UNKNOWN"
+    },
+    "source" : "https://finance.sina.com.cn/staticdata/us/GLD",
+    "retrievedAt" : "2026-10-23T12:01:08.802Z",
+    "sampleCount" : 84,
+    "firstSession" : "2026-06-25",
+    "lastSession" : "2026-10-22",
+    "adjustmentVerified" : false,
+    "corporateActionsVerified" : false,
+    "permissions" : {
+      "localDisplay" : "UNKNOWN",
+      "modelInput" : "UNKNOWN",
+      "storagePolicy" : "METADATA_ONLY"
+    }
+  }, {
+    "instrument" : {
+      "schemaVersion" : "1.0.0",
+      "instrumentId" : "ETF:SINA:NYSE_ARCA:SLV:USD",
+      "instrumentType" : "ETF",
+      "symbol" : "SLV",
+      "exchange" : "NYSE_ARCA",
+      "provider" : "SINA",
+      "quoteCurrency" : "USD",
+      "priceUnit" : "CURRENCY_PER_SHARE",
+      "exchangeTimezone" : "America/New_York",
+      "calendarId" : "US_EQUITIES_CORE",
+      "calendarVersion" : "us-core-2026-v1",
+      "proxyFor" : "SILVER",
+      "adjustment" : "UNKNOWN",
+      "adjustmentDescription" : "默认序列按 AKShare 文档为未复权；尚未核实实际窗口复权与公司行动，保持 UNKNOWN"
+    },
+    "source" : "https://finance.sina.com.cn/staticdata/us/SLV",
+    "retrievedAt" : "2026-10-23T12:01:10.034Z",
+    "sampleCount" : 84,
+    "firstSession" : "2026-06-25",
+    "lastSession" : "2026-10-22",
+    "adjustmentVerified" : false,
+    "corporateActionsVerified" : false,
+    "permissions" : {
+      "localDisplay" : "UNKNOWN",
+      "modelInput" : "UNKNOWN",
+      "storagePolicy" : "METADATA_ONLY"
+    }
+  } ],
+  "explicitProxyEnabled" : false,
+  "schemaVersion" : "1.0.0",
+  "productionAllowlist" : [ ]
+}

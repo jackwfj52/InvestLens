@@ -243,7 +243,7 @@ def parse_yahoo(raw, symbol, start, end):
         raise ProbeError('INVALID_RESPONSE') from None
 
 
-def parse_sina(raw, symbol, start, end, node='node'):
+def decode_sina_rows(raw, symbol, start, end, node='node'):
     """Decode DATA with a pinned local SDK algorithm; never execute remote JS."""
     try:
         text = raw.decode('ascii')
@@ -293,6 +293,11 @@ try {
             raise ProbeError('SINA_DECODE_FAILED') from None
         if start <= session <= end:
             bars.append({'date': session.isoformat(), **{k: row.get(k) for k in ('open', 'high', 'low', 'close')}})
+    return bars
+
+
+def parse_sina(raw, symbol, start, end, node='node'):
+    bars = decode_sina_rows(raw, symbol, start, end, node)
     return {**validate_bars(bars, start, end), 'decodedBarsVerified': True,
             'decoderVersion': 'akshare-1.19.1/zh_js_decode',
             'observedMetadata': {'symbol': symbol, 'currency': None, 'exchange': None,
