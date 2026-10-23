@@ -17,6 +17,8 @@ class ResearchFreezeTests extends ResearchPipelineSupport {
         assertThat(result.snapshot().get("snapshotHash").asString()).isEqualTo(store.get(run.runId()).snapshotHash());
         assertThat(result.scenarioResult().path("runId").asString()).isEqualTo(run.runId());
         assertThat(result.metricBundle().get("metrics")).hasSize(7);
+        assertThat(result.metricBundle().get("inputHash").asString()).isEqualTo(org.jack.backend.common.json.CanonicalJson.sha256(result.inputContent()));
+        assertThat(result.inputContent().get("parameters").has("minimumSamples")).isTrue();
         assertThat(result.metricBundle().get("metrics").get(2).get("value").asString()).isEqualTo("-0.065");
         assertThat(result.evidence()).allMatch(value->value.runId().equals(run.runId()) && value.type().equals("USER_INPUT"));
         verifyNoInteractions(provider);
@@ -38,5 +40,11 @@ class ResearchFreezeTests extends ResearchPipelineSupport {
                 unrelated.request().portfolioSnapshotId(),unrelated.request().portfolioVersion(),unrelated.request().dataMode(),scenarioId))).isInstanceOf(BusinessException.class);
         var key=jdbc.queryForObject("SELECT idempotency_key FROM idempotency_keys WHERE run_id=?",String.class,run.runId());
         assertThatThrownBy(()->creation.create(run.decisionId(),key,new RunDtos.Create("1.0.0",run.decisionVersion(),run.portfolioSnapshotId(),run.portfolioVersion(),run.dataMode()))).isInstanceOf(BusinessException.class);
+    }
+    @Test void optionalScenarioCannotBeExplicitNullOverHttp() throws Exception {
+        var fixture=fixture();var request=(tools.jackson.databind.node.ObjectNode)json.valueToTree(fixture.request());request.putNull("scenarioId");
+        var http=java.net.http.HttpRequest.newBuilder(java.net.URI.create("http://127.0.0.1:"+port+"/api/decisions/"+fixture.decisionId()+"/runs"))
+                .header("Content-Type","application/json").header("Idempotency-Key",UUID.randomUUID().toString()).POST(java.net.http.HttpRequest.BodyPublishers.ofString(json.writeValueAsString(request))).build();
+        assertThat(java.net.http.HttpClient.newHttpClient().send(http,java.net.http.HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(400);
     }
 }

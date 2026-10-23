@@ -36,18 +36,20 @@ public class ResearchFreezeService {
     private final ScenarioService scenarios;
     private final ObjectMapper json;
     private final Clock clock;
+    private final QuantPolicy quantPolicy;
     private final String model,disableThinking;
     public ResearchFreezeService(ResearchMapper mapper,CurrentOwner owner,WorkflowClaimService claims,EvidenceService evidence,EvidenceMapper records,
             DecisionService decisions,PortfolioService portfolios,PortfolioInstrumentCatalog catalog,MetricService metrics,MetricFactory factory,ScenarioService scenarios,ObjectMapper json,Clock clock,
-            @Value("${LLM_MODEL:disabled}") String model,@Value("${LLM_DISABLE_THINKING:false}") String disableThinking){
+            @Value("${LLM_MODEL:disabled}") String model,@Value("${LLM_DISABLE_THINKING:false}") String disableThinking,QuantPolicy quantPolicy){
         this.mapper=mapper;this.owner=owner;this.claims=claims;this.evidence=evidence;this.records=records;this.decisions=decisions;this.portfolios=portfolios;
-        this.catalog=catalog;this.metrics=metrics;this.factory=factory;this.scenarios=scenarios;this.json=json;this.clock=clock;this.model=model;this.disableThinking=disableThinking;
+        this.catalog=catalog;this.metrics=metrics;this.factory=factory;this.scenarios=scenarios;this.json=json;this.clock=clock;this.model=model;this.disableThinking=disableThinking;this.quantPolicy=quantPolicy;
     }
     public ResearchData.Frozen get(String run) {
         String body=mapper.frozen(run,owner.id());if(body==null)throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND);
         var frozen=json.readValue(body,ResearchData.Frozen.class);var snapshot=(ObjectNode)frozen.snapshot().deepCopy();
         String expected=snapshot.remove("snapshotHash").asString();snapshot.remove("snapshotId");snapshot.remove("frozenAt");
-        if(!run.equals(snapshot.get("runId").asString()) || !expected.equals(CanonicalJson.sha256(snapshot)))throw new BusinessException(ErrorCode.SNAPSHOT_MISMATCH);
+        if(!run.equals(snapshot.get("runId").asString()) || !expected.equals(CanonicalJson.sha256(snapshot)) || frozen.inputContent()==null
+                || !CanonicalJson.sha256(frozen.inputContent()).equals(frozen.metricBundle().get("inputHash").asString()))throw new BusinessException(ErrorCode.SNAPSHOT_MISMATCH);
         return frozen;
     }
     @Transactional
@@ -98,16 +100,20 @@ public class ResearchFreezeService {
         }
         String snapshotId="research_"+UUID.randomUUID();var gaps=new ArrayList<>(tools.gaps());gaps.add(new Gap("MACRO_UNVERIFIED",null,"没有获准宏观因果证据，用户假设保持未验证"));
         gaps.sort(Comparator.comparing(Gap::code).thenComparing(Gap::ref,Comparator.nullsFirst(Comparator.naturalOrder())));
-        var metadata=new ArrayList<Object>();
-        for(var position:portfolio.positions())metadata.add(Map.of("instrumentId",position.instrumentId(),"inputIdentity",catalog.require(position.instrumentId(),run.dataMode(),"instrumentId")));
+        var metadata=new ArrayList<Map<String,Object>>();
+        for(var position:portfolio.positions())metadata.add(new LinkedHashMap<>(Map.of("instrumentId",position.instrumentId(),"inputIdentity",catalog.require(position.instrumentId(),run.dataMode(),"instrumentId"))));
         var manifest=json.createObjectNode();manifest.put("schemaVersion","1.0.0");
-        manifest.set("instruments",json.valueToTree(metadata.stream().map(value->Map.of("instrumentId",json.valueToTree(value).get("instrumentId").asString(),"metadataHash",CanonicalJson.sha256(json.valueToTree(value)))).sorted(Comparator.comparing(value->value.get("instrumentId"))).toList()));
         var marketManifest=new ArrayList<JsonNode>();
+        var marketContents=new ArrayList<MarketContent>();
         for(var input:calculation.marketInputs())if(input.payloadRef()!=null && input.inputHash()!=null) {
             var content=json.readValue(records.payload(input.payloadRef(),owner.id()),MarketContent.class);var instrument=content.instrument();
+            if(!CanonicalJson.sha256(json.valueToTree(content)).equals(input.inputHash()))throw new BusinessException(ErrorCode.SNAPSHOT_MISMATCH);
+            marketContents.add(content);
+            metadata.stream().filter(value->value.get("instrumentId").equals(input.instrumentId())).findFirst().orElseThrow().put("marketInstrument",instrument);
             marketManifest.add(json.valueToTree(Map.of("evidenceRef",evidenceIds.get(input.evidenceRef()),"interval","1d","adjustment",instrument.adjustment().name(),"calendarId",instrument.calendarId(),
                     "calendarVersion",instrument.calendarVersion(),"exchangeTimezone",instrument.exchangeTimezone(),"window",Map.of("start",content.start(),"end",content.end(),"interval","1d"),"sampleCount",content.bars().size(),"inputHash",input.inputHash())));
         }
+        manifest.set("instruments",json.valueToTree(metadata.stream().map(value->Map.of("instrumentId",value.get("instrumentId").toString(),"metadataHash",CanonicalJson.sha256(json.valueToTree(value)))).sorted(Comparator.comparing(value->value.get("instrumentId"))).toList()));
         manifest.set("marketInputs",json.valueToTree(marketManifest.stream().sorted(Comparator.comparing(value->value.get("evidenceRef").asString())).toList()));
         manifest.set("evidence",json.valueToTree(bound.stream().sorted(Comparator.comparing(Evidence::evidenceId)).map(value->{var entry=json.createObjectNode();entry.put("evidenceId",value.evidenceId());entry.put("payloadHash",value.payloadHash());entry.put("storagePolicy",value.storagePolicy().name());return entry;}).toList()));
         manifest.set("metrics",json.valueToTree(publishedMetrics.stream().sorted(Comparator.comparing(MetricData.Metric::metricId)).map(value->Map.of("metricId",value.metricId(),"inputHash",value.inputHash(),"formulaVersion",value.formulaVersion(),"contentHash",CanonicalJson.sha256(json.valueToTree(value)))).toList()));
@@ -118,7 +124,10 @@ public class ResearchFreezeService {
         var snapshot=json.createObjectNode();snapshot.put("schemaVersion","1.0.0");snapshot.put("runId",run.runId());snapshot.put("hashAlgorithm",CanonicalJson.ALGORITHM);
         snapshot.set("decisionRef",json.valueToTree(new ScenarioData.DecisionRef(run.decisionId(),run.decisionVersion())));snapshot.set("portfolioRef",json.valueToTree(calculation.portfolioRef()));snapshot.put("dataMode",run.dataMode().name());snapshot.set("manifest",manifest);
         String hash=CanonicalJson.sha256(snapshot);snapshot.put("snapshotId",snapshotId);snapshot.put("snapshotHash",hash);snapshot.put("frozenAt",MarketData.timestamp(clock.instant()));
-        String combinedHash=CanonicalJson.sha256(json.valueToTree(Map.of("planHash",tools.planHash(),"metricInputs",publishedMetrics.stream().map(MetricData.Metric::inputHash).distinct().sorted().toList())));
+        marketContents.sort(Comparator.comparing(value->value.instrument().instrumentId()));
+        var inputContent=json.valueToTree(new InputContent("1.0.0",ENGINE_VERSION,portfolio.contentHash(),decision.action(),scenario==null?List.of():scenario.shocks().stream().map(value->(Object)value).toList(),marketContents,
+                Map.of("dataMode",run.dataMode().name(),"valuationBasis",portfolio.valuationBasis().name(),"costsIncluded",false,"constraints",decision.constraints(),"annualizationFactor",252,"minimumSamples",quantPolicy.minimumSamples())));
+        String combinedHash=CanonicalJson.sha256(inputContent);
         JsonNode bundle=json.valueToTree(Map.of("schemaVersion","1.0.0","bundleId","bundle_"+UUID.randomUUID(),"runId",run.runId(),"researchSnapshotId",snapshotId,"snapshotHash",hash,"inputHash",combinedHash,"engineVersion",ENGINE_VERSION,"metrics",publishedMetrics));
         JsonNode scenarioResult=null;
         if(scenario!=null) {
@@ -128,7 +137,7 @@ public class ResearchFreezeService {
             output.set("metricRefs",json.valueToTree(scenario.metricRefs().stream().map(metricIds::get).toList()));
             output.set("ruleResults",json.valueToTree(scenario.ruleResults().stream().map(rule->new ScenarioData.Rule(rule.ruleId(),rule.status(),rule.threshold(),rule.unit(),rule.metricRefs().stream().map(metricIds::get).toList(),rule.reason())).toList()));scenarioResult=output;
         }
-        var frozen=new ResearchData.Frozen(snapshot,json.valueToTree(decision),json.valueToTree(portfolio),plan,bundle,scenarioResult,bound,json.valueToTree(metadata));
+        var frozen=new ResearchData.Frozen(snapshot,json.valueToTree(decision),json.valueToTree(portfolio),plan,bundle,scenarioResult,bound,json.valueToTree(metadata),inputContent);
         mapper.insertFrozen(snapshotId,run.runId(),hash,json.writeValueAsString(frozen));
         if(mapper.bindFrozen(run.runId(),snapshotId,hash,"PARTIAL")!=1)throw new BusinessException(ErrorCode.VERSION_CONFLICT);
         return frozen;

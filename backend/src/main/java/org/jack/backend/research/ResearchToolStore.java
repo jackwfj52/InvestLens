@@ -21,8 +21,10 @@ public class ResearchToolStore {
     private final MetricService metrics;
     private final ScenarioService scenarios;
     private final ObjectMapper json;
-    public ResearchToolStore(WorkflowClaimService claims,ResearchMapper mapper,EvidenceService evidence,MetricService metrics,ScenarioService scenarios,ObjectMapper json){
+    private final WorkflowStore workflow;
+    public ResearchToolStore(WorkflowClaimService claims,ResearchMapper mapper,EvidenceService evidence,MetricService metrics,ScenarioService scenarios,ObjectMapper json,WorkflowStore workflow){
         this.claims=claims;this.mapper=mapper;this.evidence=evidence;this.metrics=metrics;this.scenarios=scenarios;this.json=json;
+        this.workflow=workflow;
     }
     public ResearchData.Tools existing(String run,String hash) {
         String body=mapper.tools(run);if(body==null)return null;
@@ -50,6 +52,8 @@ public class ResearchToolStore {
             if(bundle.metrics().stream().anyMatch(metric->metric.status()!=MetricData.Status.CALCULABLE))gaps.add(new Gap("HISTORICAL_METRICS_INCOMPLETE",bundleId,"部分历史指标样本不足"));
         } else gaps.add(new Gap("HISTORICAL_RISK_MISSING",null,"没有可复用的合格历史风险指标"));
         var result=new ResearchData.Tools(hash,calculationId,bundleId,scenarioId,gaps);
+        workflow.linkSnapshot(claim.run().runId(),calculationId);
+        if(bundleId!=null)workflow.linkBundle(claim.run().runId(),bundleId);
         mapper.insertTools(claim.run().runId(),hash,json.writeValueAsString(result));return result;
     }
 }

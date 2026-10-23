@@ -42,7 +42,7 @@ public final class FrozenReferences {
     public List<EvidenceData.Evidence> modelEvidence(){return frozen.evidence().stream().filter(value->value.modelInputAllowed() && value.quality()==MarketQuality.Quality.VALID && value.payloadRef()!=null && value.storagePolicy()==EvidenceData.StoragePolicy.PAYLOAD_ALLOWED).toList();}
     public JsonNode modelMetrics() {
         var approved=tools.jackson.databind.json.JsonMapper.builder().build().createArrayNode();
-        for(JsonNode metric:metrics.values())try{metric(metric.get("metricId").asString());approved.add(metric);}catch(BusinessException unusable){}
+        for(JsonNode metric:metrics.values().stream().sorted(Comparator.comparing(value->value.get("metricId").asString())).toList())try{metric(metric.get("metricId").asString());approved.add(metric);}catch(BusinessException unusable){}
         return approved;
     }
     private static void invalid(){throw new BusinessException(ErrorCode.MODEL_OUTPUT_INVALID);}

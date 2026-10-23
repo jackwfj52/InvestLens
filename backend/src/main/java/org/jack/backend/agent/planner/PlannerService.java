@@ -21,6 +21,10 @@ public class PlannerService {
     private final PortfolioService portfolios;
     private final PortfolioInstrumentCatalog catalog;
     private final ObjectMapper json;
+    private org.jack.backend.research.ResearchMapper research;
+    private org.jack.backend.common.identity.CurrentOwner owner;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void fixedScenario(org.jack.backend.research.ResearchMapper research,org.jack.backend.common.identity.CurrentOwner owner){this.research=research;this.owner=owner;}
     public PlannerService(BudgetedLlm llm,PlanParser parser,DecisionService decisions,PortfolioService portfolios,PortfolioInstrumentCatalog catalog,ObjectMapper json){
         this.llm=llm;this.parser=parser;this.decisions=decisions;this.portfolios=portfolios;this.catalog=catalog;this.json=json;
     }
@@ -30,16 +34,19 @@ public class PlannerService {
         Set<String> instruments=portfolio.positions().stream().map(position->position.instrumentId())
                 .filter(id->catalog.require(id,run.dataMode(),"instrumentId").kind()!=PortfolioInstrumentCatalog.Kind.CASH).collect(Collectors.toSet());
         var context=new PlanParser.Context(run.runId(),decision.decisionId(),decision.version(),decision.hypotheses().stream().map(h->h.hypothesisId()).collect(Collectors.toSet()),instruments);
+        boolean fixedScenario=research!=null && research.scenario(run.runId(),owner.id())!=null;
         String prompt;
         try{prompt=new ClassPathResource("prompts/planner-v1.txt").getContentAsString(StandardCharsets.UTF_8)
                 +"\nPlan JSON Schema:\n"+new ClassPathResource("prompts/plan-v1.schema.json").getContentAsString(StandardCharsets.UTF_8);}
         catch(java.io.IOException missing){throw new BusinessException(ErrorCode.INTERNAL_ERROR);}
-        String input=json.writeValueAsString(Map.of("fixed",context,"hypotheses",decision.hypotheses(),"action",decision.action(),"horizon",decision.horizon(),"constraints",decision.constraints(),
+        String input=json.writeValueAsString(Map.of("fixed",context,"hypotheses",decision.hypotheses(),"action",decision.action(),"horizon",decision.horizon(),"constraints",decision.constraints(),"scenarioInputBound",fixedScenario,
                 "windowPolicy","2026 only, past or current New York date, max 120 calendar days; no invented shocks"));
         for(int attempt=0;attempt<2;attempt++) {
             try {
                 var reply=llm.complete(claim,attempt==0?Purpose.STANDARD:Purpose.SCHEMA_REPAIR,new LlmClient.Request(prompt+(attempt==0?"":"\nRepair invalid JSON/schema using the same fixed inputs."),input,2048));
-                return json.convertValue(parser.parse(reply.content(),context),new tools.jackson.core.type.TypeReference<Map<String,Object>>(){});
+                var parsed=parser.parse(reply.content(),context);
+                if(fixedScenario && (!parsed.get("dataNeeds").isEmpty() || parsed.get("steps").valueStream().noneMatch(step->step.get("tool").asString().equals("Quant.runScenario"))))throw new BusinessException(ErrorCode.MODEL_OUTPUT_INVALID);
+                return json.convertValue(parsed,new tools.jackson.core.type.TypeReference<Map<String,Object>>(){});
             }catch(BusinessException invalid){if(invalid.getErrorCode()!=ErrorCode.MODEL_OUTPUT_INVALID || attempt==1)throw invalid;}
         }
         throw new BusinessException(ErrorCode.MODEL_OUTPUT_INVALID);

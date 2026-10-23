@@ -28,6 +28,9 @@ public class PreparationHandler implements WorkflowHandler {
     private org.jack.backend.report.ReportCandidates candidates;
     @org.springframework.beans.factory.annotation.Autowired
     public void reportCandidates(org.jack.backend.report.ReportCandidates candidates){this.candidates=candidates;}
+    private org.jack.backend.report.ReportStructureValidator structure;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void reportStructure(org.jack.backend.report.ReportStructureValidator structure){this.structure=structure;}
     public PreparationHandler(DecisionService decisions,PortfolioService portfolios,org.jack.backend.agent.planner.PlannerService planner,
             boolean modelEnabled){this(decisions,portfolios,planner,modelEnabled,null,null,null,null,null,null,null);}
     @org.springframework.beans.factory.annotation.Autowired
@@ -41,6 +44,10 @@ public class PreparationHandler implements WorkflowHandler {
     @Override public Result execute(WorkflowClaimService.Claim claim) {
         var r=claim.run();var d=decisions.requireConfirmed(r.decisionId(),r.decisionVersion());var p=portfolios.getSnapshot(r.portfolioSnapshotId());
         String scenarioId=research==null?null:research.scenario(r.runId(),owner.id());
+        if(r.researchSnapshotId()!=null && claim.step().stepKey()==StepKey.VALIDATE) {
+            var candidate=json.readTree(mapper.output(store.step(r.runId(),StepKey.JUDGE).outputRef())).get("report");var validation=structure.validate(r.runId(),candidate);
+            return new Result(Map.of("kind","REPORT_CANDIDATE_VALIDATED","validation",validation,"report",candidate),null,null);
+        }
         if(r.researchSnapshotId()!=null && claim.step().stepKey()==StepKey.JUDGE) {
             var candidate=candidates.assemble(claim,modelEnabled);
             return new Result(json.convertValue(json.valueToTree(candidate),new tools.jackson.core.type.TypeReference<Map<String,Object>>(){}),candidate.state().equals("FAILED")?null:StepKey.VALIDATE,candidate.state().equals("FAILED")?"DATA_UNUSABLE":null);

@@ -25,6 +25,13 @@ public class ContractSchemas {
         JsonNode schema=definitions.get(name);
         if(schema==null || !matches(value,schema,0))throw new BusinessException(ErrorCode.MODEL_OUTPUT_INVALID);
     }
+    public void requireCandidate(JsonNode value) {
+        var schema=(tools.jackson.databind.node.ObjectNode)definitions.get("Report").deepCopy();
+        var properties=(tools.jackson.databind.node.ObjectNode)schema.get("properties");properties.remove("validatedAt");properties.remove("publishedAt");
+        var required=json.createArrayNode();for(JsonNode field:schema.get("required"))if(!Set.of("validatedAt","publishedAt").contains(field.asString()))required.add(field);
+        schema.set("required",required);
+        if(!matches(value,schema,0))throw new BusinessException(ErrorCode.MODEL_OUTPUT_INVALID);
+    }
     private boolean matches(JsonNode value,JsonNode schema,int depth) {
         if(depth>100 || value==null)return false;
         if(schema.has("$ref")) {

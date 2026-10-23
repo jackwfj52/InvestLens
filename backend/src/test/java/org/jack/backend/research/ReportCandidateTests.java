@@ -31,7 +31,7 @@ class ReportCandidateTests extends ResearchPipelineSupport {
     }
     @Test void withoutExplicitShocksMinimumReportCannotExist() throws Exception {
         var run=scenarioRun();throughQuant();var context=frozen.get(run.runId());
-        var missing=new ResearchData.Frozen(context.snapshot(),context.decision(),context.portfolio(),context.plan(),context.metricBundle(),null,context.evidence(),context.instrumentMetadata());
+        var missing=new ResearchData.Frozen(context.snapshot(),context.decision(),context.portfolio(),context.plan(),context.metricBundle(),null,context.evidence(),context.instrumentMetadata(),context.inputContent());
         assertThat(candidates.minimum(missing)).isFalse();
     }
     @Test void judgeCannotPromoteMacroHypothesisOrInventClaimReferences() throws Exception {

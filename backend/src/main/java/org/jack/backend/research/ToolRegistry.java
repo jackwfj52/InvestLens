@@ -38,6 +38,9 @@ public class ToolRegistry {
         Set<String> assets=portfolio.positions().stream().map(position->position.instrumentId()).filter(id->instruments.require(id,run.dataMode(),"instrumentId").kind()!=PortfolioInstrumentCatalog.Kind.CASH).collect(Collectors.toSet());
         JsonNode plan=parser.parse(json.writeValueAsString(supplied),new PlanParser.Context(run.runId(),run.decisionId(),run.decisionVersion(),decision.hypotheses().stream().map(h->h.hypothesisId()).collect(Collectors.toSet()),assets));
         String hash=CanonicalJson.sha256(plan);budgets.requireActive(claim);var existing=store.existing(run.runId(),hash);if(existing!=null)return existing;
+        var graph=new HashMap<String,JsonNode>();for(JsonNode step:plan.get("steps"))graph.put(step.get("stepKey").asString(),step);
+        var marketKeys=new HashSet<String>();for(var entry:graph.entrySet())if(entry.getValue().get("tool").asString().equals("Market.getHistory"))marketKeys.add(entry.getKey());
+        for(JsonNode step:plan.get("steps"))if(step.get("tool").asString().equals("Quant.calculate") && !ancestors(step,graph).containsAll(marketKeys))throw new BusinessException(ErrorCode.MODEL_OUTPUT_INVALID);
         var queries=new ArrayList<MarketData.Query>();var collected=new LinkedHashMap<MarketData.Query,MarketQuality.Result>();var gaps=new ArrayList<Gap>();
         boolean calculate=false,scenario=false;
         for(JsonNode step:plan.get("steps")) {calculate|=step.get("tool").asString().equals("Quant.calculate");scenario|=step.get("tool").asString().equals("Quant.runScenario");}
@@ -58,5 +61,10 @@ public class ToolRegistry {
             }
         }
         return store.save(claim,hash,queries,collected,scenarioId,calculate,gaps);
+    }
+    private Set<String> ancestors(JsonNode step,Map<String,JsonNode> graph) {
+        var result=new HashSet<String>();var pending=new ArrayDeque<String>();for(JsonNode key:step.get("dependsOn"))pending.add(key.asString());
+        while(!pending.isEmpty()){String key=pending.removeFirst();if(result.add(key))for(JsonNode dependency:graph.get(key).get("dependsOn"))pending.add(dependency.asString());}
+        return result;
     }
 }

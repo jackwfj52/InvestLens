@@ -35,6 +35,8 @@ public abstract class WorkflowIntegrationSupport extends CalculationIntegrationS
             evidenceIds.addAll(jdbc.queryForList("SELECT evidence_id FROM research_evidence WHERE run_id=?",String.class,id));
             var toolRows=jdbc.queryForList("SELECT JSON_UNQUOTE(JSON_EXTRACT(content_json,'$.calculationSnapshotId')) FROM research_tool_results WHERE run_id=?",String.class,id);
             for(String snapshotId:toolRows)if(!snapshotIds.contains(snapshotId))snapshotIds.add(snapshotId);
+            var toolBundles=jdbc.queryForList("SELECT JSON_UNQUOTE(JSON_EXTRACT(content_json,'$.bundleId')) FROM research_tool_results WHERE run_id=?",String.class,id);
+            for(String bundleId:toolBundles)if(bundleId!=null && !bundleId.equals("null") && !bundleIds.contains(bundleId))bundleIds.add(bundleId);
             jdbc.update("DELETE FROM tool_calls WHERE run_id=?",id);jdbc.update("DELETE FROM run_data_windows WHERE run_id=?",id);
             jdbc.update("DELETE FROM step_outputs WHERE run_id=?",id);
             jdbc.update("DELETE FROM idempotency_keys WHERE run_id=?",id);

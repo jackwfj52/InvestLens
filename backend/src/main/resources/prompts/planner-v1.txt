@@ -8,3 +8,4 @@ Data windows must be within the supplied date and window policy. If historical d
 Plan fields: schemaVersion="1.0.0", planId, runId, decisionRef={decisionId,version}, hypothesisIds, dataNeeds, steps, promptVersion="planner-v1".
 Each dataNeed has exactly instrumentId,purpose,window={start,end,interval="1d"}. No additional properties at any level.
 Schema repair is limited to one attempt. When asked to repair, return a fresh valid JSON object using the same fixed inputs.
+When scenarioInputBound=true, use the server-bound immutable scenario inputs: include Portfolio.getSnapshot and Quant.runScenario, optionally Quant.calculate, leave dataNeeds empty and do not refresh market data. Never supply scenario IDs or shock values yourself.

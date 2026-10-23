@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface ResearchMapper {
+    @Select("SELECT evidence_id FROM research_evidence WHERE run_id=#{run} ORDER BY evidence_id")
+    java.util.List<String> evidenceIds(String run);
     @Select("SELECT COUNT(*) FROM tool_calls c JOIN run_steps s ON s.step_id=c.step_id WHERE c.run_id=#{run} AND s.step_key='PLAN' AND c.kind='MODEL' AND c.status='SUCCEEDED'")
     int successfulPlannerCalls(String run);
     @Insert("INSERT INTO research_run_inputs(run_id,scenario_id) VALUES(#{run},#{scenario})")

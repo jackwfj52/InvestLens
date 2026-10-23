@@ -9,14 +9,28 @@ import static org.jack.backend.workflow.WorkflowData.*;
 
 public final class RunDtos {
     private RunDtos() { }
-    public record Create(@NotBlank @Pattern(regexp = "1\\.0\\.0") String schemaVersion,
-                         @NotNull @Positive Integer decisionVersion,
-                         @NotBlank @Pattern(regexp = ID) String portfolioSnapshotId,
-                         @NotNull @Positive Integer portfolioVersion, @NotNull DataMode dataMode,
-                         @Pattern(regexp=ID) @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) String scenarioId) {
+    public static final class Create {
+        @com.fasterxml.jackson.annotation.JsonProperty @NotBlank @Pattern(regexp="1\\.0\\.0") private String schemaVersion;
+        @com.fasterxml.jackson.annotation.JsonProperty @NotNull @Positive private Integer decisionVersion;
+        @com.fasterxml.jackson.annotation.JsonProperty @NotBlank @Pattern(regexp=ID) private String portfolioSnapshotId;
+        @com.fasterxml.jackson.annotation.JsonProperty @NotNull @Positive private Integer portfolioVersion;
+        @com.fasterxml.jackson.annotation.JsonProperty @NotNull private DataMode dataMode;
+        @com.fasterxml.jackson.annotation.JsonProperty @Pattern(regexp=ID)
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        @com.fasterxml.jackson.annotation.JsonSetter(nulls=com.fasterxml.jackson.annotation.Nulls.FAIL) private String scenarioId;
+        public Create() { }
         public Create(String schemaVersion,Integer decisionVersion,String portfolioSnapshotId,Integer portfolioVersion,DataMode dataMode) {
             this(schemaVersion,decisionVersion,portfolioSnapshotId,portfolioVersion,dataMode,null);
         }
+        public Create(String schemaVersion,Integer decisionVersion,String portfolioSnapshotId,Integer portfolioVersion,DataMode dataMode,String scenarioId) {
+            this.schemaVersion=schemaVersion;this.decisionVersion=decisionVersion;this.portfolioSnapshotId=portfolioSnapshotId;this.portfolioVersion=portfolioVersion;this.dataMode=dataMode;this.scenarioId=scenarioId;
+        }
+        public String schemaVersion(){return schemaVersion;}
+        public Integer decisionVersion(){return decisionVersion;}
+        public String portfolioSnapshotId(){return portfolioSnapshotId;}
+        public Integer portfolioVersion(){return portfolioVersion;}
+        public DataMode dataMode(){return dataMode;}
+        public String scenarioId(){return scenarioId;}
     }
     public record Budget(String deadlineAt, int maxInstruments, int maxWindowsPerInstrument, int maxDataAttempts,
                          int maxModelAttempts, int maxSchemaRepairs, int maxRetries,

@@ -19,13 +19,16 @@ public class WorkflowCheckpointService {
     @Transactional
     public void save(Claim claim,WorkflowHandler.Result result) {
         claims.requireLive(claim);
-        if(claim.step().inputHash()==null || (result.failureCode()==null && result.next()==null))throw new BusinessException(ErrorCode.INVALID_STATE);
+        boolean structureOnly=claim.step().stepKey()==StepKey.VALIDATE && "REPORT_CANDIDATE_VALIDATED".equals(result.output().get("kind"));
+        if(claim.step().inputHash()==null || (result.failureCode()==null && result.next()==null && !structureOnly))throw new BusinessException(ErrorCode.INVALID_STATE);
         String outputId="output_"+UUID.randomUUID();String hash=CanonicalJson.sha256(json.valueToTree(result.output()));
         mapper.insertOutput(outputId,claim.step(),hash,json.writeValueAsString(result.output()));
         store.transitionStep(claim.run().runId(),claim.step().stepKey(),result.failureCode()==null?StepStatus.SUCCEEDED:StepStatus.FAILED,
                 claim.step().executionVersion(),null,outputId,result.failureCode());
         if(result.failureCode()!=null) {
             Run run=store.get(claim.run().runId());store.transition(run.runId(),run.revision(),RunStatus.FAILED,run.stage(),result.failureCode());
+        } else if(structureOnly) {
+            Run run=store.get(claim.run().runId());store.transition(run.runId(),run.revision(),RunStatus.FAILED,run.stage(),"REPORT_UNAVAILABLE");
         } else store.addNextStep(claim.run().runId(),result.next(),hash);
     }
     @Transactional

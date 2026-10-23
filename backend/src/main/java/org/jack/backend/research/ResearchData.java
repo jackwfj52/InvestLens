@@ -10,7 +10,7 @@ public final class ResearchData {
     }
     public record Frozen(tools.jackson.databind.JsonNode snapshot,tools.jackson.databind.JsonNode decision,tools.jackson.databind.JsonNode portfolio,
             tools.jackson.databind.JsonNode plan,tools.jackson.databind.JsonNode metricBundle,tools.jackson.databind.JsonNode scenarioResult,
-            List<org.jack.backend.evidence.EvidenceData.Evidence> evidence,tools.jackson.databind.JsonNode instrumentMetadata) {
+            List<org.jack.backend.evidence.EvidenceData.Evidence> evidence,tools.jackson.databind.JsonNode instrumentMetadata,tools.jackson.databind.JsonNode inputContent) {
         public Frozen { evidence=List.copyOf(evidence); }
     }
 }
