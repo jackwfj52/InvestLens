@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useAsyncRequest } from '../composables/useAsyncRequest.ts'
 import { checkBackend } from '../services/backendStatus.ts'
+import ResearchInputs from '../components/ResearchInputs.vue'
 
 const { phase, error, execute } = useAsyncRequest(checkBackend)
 onMounted(execute)
@@ -35,9 +36,5 @@ onMounted(execute)
     </ol>
   </section>
 
-  <section class="card empty-state" aria-labelledby="input-title">
-    <div class="empty-icon" aria-hidden="true">＋</div>
-    <h2 id="input-title">研究输入入口即将开放</h2>
-    <p>组合与决策表单将在后续版本接入。<br />当前页面可检查本地服务连接。</p>
-  </section>
+  <ResearchInputs />
 </template>
