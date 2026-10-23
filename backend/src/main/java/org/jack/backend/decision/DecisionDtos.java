@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.Nulls;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.jack.backend.common.api.ApiError;
+import org.jack.backend.common.validation.ContractPatterns;
 
 import java.util.List;
 
@@ -14,9 +15,9 @@ import java.util.List;
 public final class DecisionDtos {
     private DecisionDtos() { }
 
-    public static final String ID = "[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}";
-    public static final String RATIO = "(?:0(?:\\.[0-9]{0,9}[1-9])?|1)";
-    public static final String DECIMAL = "(?!-0$)-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,9}[1-9])?";
+    public static final String ID = ContractPatterns.ID;
+    public static final String RATIO = ContractPatterns.RATIO;
+    public static final String DECIMAL = ContractPatterns.DECIMAL;
 
     public enum InputStatus { NEEDS_INPUT, READY, CONFIRMED }
     public enum AllocationMode { TARGET_WEIGHT, DELTA_PERCENTAGE_POINTS }

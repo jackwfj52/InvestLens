@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "G01 20/10/70 样例",
+  "baseCurrency": "USD",
+  "valuationBasis": "NORMALIZED",
+  "totalValue": "100",
+  "asOf": "2026-10-23T00:00:00.000Z",
+  "dataMode": "SYNTHETIC",
+  "positions": [
+    {"instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD", "quoteCurrency": "USD", "weight": "0.2"},
+    {"instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD", "quoteCurrency": "USD", "weight": "0.1"},
+    {"instrumentId": "CASH:USD", "quoteCurrency": "USD", "weight": "0.7"}
+  ]
+}
