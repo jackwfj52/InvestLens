@@ -21,6 +21,25 @@ class WorkflowResilienceTests extends WorkflowIntegrationSupport {
     @Autowired BudgetedCalls calls;
     @Autowired CallBudgetTests.MutableClock clock;
     @BeforeEach void reset(){clock.instant=java.time.Instant.parse("2026-10-23T13:00:00Z");}
+    @Test void cancellationIsIdempotentAndFencesDispatchedCallsAndWrites() throws Exception {
+        var run=queued(fixture());var claim=claims.claimNext();var permit=budgets.reserve(claim,Request.model(Purpose.STANDARD));
+        var cancelled=store.cancel(run.runId());assertThat(store.cancel(run.runId())).isEqualTo(cancelled);
+        assertThat(cancelled.status()).isEqualTo(RunStatus.CANCELLED);assertThat(claims.claimNext()).isNull();
+        assertThat(store.step(run.runId(),StepKey.PLAN).executionVersion()).isGreaterThan(claim.step().executionVersion());
+        assertThat(budgets.finish(permit,null)).isTrue();
+        assertThatThrownBy(()->checkpoints.save(claim,handler.execute(claim))).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(()->budgets.reserve(claim,Request.model(Purpose.STANDARD))).isInstanceOf(BusinessException.class);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM step_outputs WHERE run_id=?",Integer.class,run.runId())).isZero();
+    }
+    @Test void cancellationRacesCheckpointAtomically() throws Exception {
+        var run=queued(fixture());var claim=claims.claimNext();var gate=new CountDownLatch(1);var pool=Executors.newFixedThreadPool(2);
+        try {
+            var save=pool.submit(()->{gate.await();try{checkpoints.save(claim,handler.execute(claim));}catch(BusinessException stale){}return true;});
+            var cancel=pool.submit(()->{gate.await();return store.cancel(run.runId());});gate.countDown();save.get(5,TimeUnit.SECONDS);cancel.get(5,TimeUnit.SECONDS);
+            assertThat(store.get(run.runId()).status()).isEqualTo(RunStatus.CANCELLED);
+            assertThat(workflowMapper.steps(run.runId())).noneMatch(step->step.status()==StepStatus.RUNNING || step.status()==StepStatus.PENDING);
+        }finally{pool.shutdownNow();}
+    }
     @Test void retriesRespectAfterGlobalQuotaAndDeadline() throws Exception {
         var run=queued(fixture());var claim=claims.claimNext();var count=new AtomicInteger();
         String result=calls.executeWithRetry(claim,Request.model(Purpose.STANDARD),permit->{
@@ -35,5 +54,15 @@ class WorkflowResilienceTests extends WorkflowIntegrationSupport {
         assertThatThrownBy(()->calls.executeWithRetry(claim,Request.model(Purpose.STANDARD),permit->{count.incrementAndGet();throw new UpstreamFailure(ErrorCode.PROVIDER_NOT_CONFIGURED,false,0);},millis->{throw new AssertionError();})).isInstanceOf(BusinessException.class);
         assertThat(count).hasValue(1);
         assertThatThrownBy(()->calls.executeWithRetry(claim,Request.model(Purpose.STANDARD),permit->{throw new UpstreamFailure(ErrorCode.RATE_LIMITED,true,120001);},millis->{throw new AssertionError();})).isInstanceOf(BusinessException.class);
+    }
+    @Test void cancelApiReturnsTerminalStateAndUnknownRunIs404() throws Exception {
+        var run=queued(fixture());var http=java.net.http.HttpClient.newHttpClient();
+        var request=java.net.http.HttpRequest.newBuilder(java.net.URI.create("http://127.0.0.1:"+port+"/api/runs/"+run.runId()+"/cancel")).POST(java.net.http.HttpRequest.BodyPublishers.noBody()).build();
+        for(int index=0;index<2;index++) {
+            var response=http.send(request,java.net.http.HttpResponse.BodyHandlers.ofString());
+            assertThat(response.statusCode()).isEqualTo(200);assertThat(json.readTree(response.body()).path("data").path("status").asString()).isEqualTo("CANCELLED");
+        }
+        var missing=java.net.http.HttpRequest.newBuilder(java.net.URI.create("http://127.0.0.1:"+port+"/api/runs/run_missing/cancel")).POST(java.net.http.HttpRequest.BodyPublishers.noBody()).build();
+        assertThat(http.send(missing,java.net.http.HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(404);
     }
 }

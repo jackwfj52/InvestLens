@@ -80,6 +80,18 @@ public class WorkflowStore {
         mapper.insertStep(step);return step;
     }
     @Transactional
+    public Run cancel(String id) {
+        Run run=locked(id);
+        if(run.status().terminal())return run;
+        for(Step step:mapper.steps(id)) {
+            if(step.status()!=StepStatus.PENDING && step.status()!=StepStatus.RUNNING)continue;
+            Step stopped=new Step(step.stepId(),id,step.stepKey(),StepStatus.SKIPPED,step.attempt(),step.inputHash(),null,null,
+                    step.executionVersion()+1,"CANCELLED",step.createdAt(),now());
+            if(mapper.updateStep(stopped,step.status(),step.executionVersion())!=1)throw new BusinessException(ErrorCode.VERSION_CONFLICT);
+        }
+        return transition(id,run.revision(),RunStatus.CANCELLED,run.stage(),null);
+    }
+    @Transactional
     public void expire(String id) {
         Run run=locked(id);LocalDateTime now=now();
         if(run.status().terminal())return;

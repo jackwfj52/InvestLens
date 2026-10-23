@@ -22,4 +22,6 @@ public class RunController {
     }
     @GetMapping("/runs/{id}")
     public ResponseEntity<ApiResponse<RunDtos.View>> get(@PathVariable @Pattern(regexp=ID) String id) { return ApiResponses.ok(RunDtos.view(store.get(id))); }
+    @PostMapping("/runs/{id}/cancel")
+    public ResponseEntity<ApiResponse<RunDtos.View>> cancel(@PathVariable @Pattern(regexp=ID) String id) { return ApiResponses.ok(RunDtos.view(store.cancel(id))); }
 }
