@@ -13,6 +13,10 @@ public class SinaProcessTransport {
     private final String python, node, script;
     private final boolean enabled;
     private final Semaphore single = new Semaphore(1);
+    private org.jack.backend.infrastructure.resilience.ExternalAccountBudget accountBudget;
+    private int perMinute;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void accountBudget(org.jack.backend.infrastructure.resilience.ExternalAccountBudget budget,@Value("${investlens.market.sina.calls-per-minute:60}") int limit){this.accountBudget=budget;this.perMinute=limit;}
     public SinaProcessTransport(@Value("${investlens.market.sina.python:python}") String python,
                                 @Value("${investlens.market.sina.node:node}") String node,
                                 @Value("${investlens.market.sina.script:../scripts/market/sina_adapter.py}") String script,
@@ -30,6 +34,8 @@ public class SinaProcessTransport {
         Process process = null;
         ExecutorService reader = Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "sina-output"); t.setDaemon(true); return t; });
         try {
+            if(accountBudget!=null)accountBudget.take("SINA_PUBLIC",perMinute);
+            if(deadline<=System.nanoTime())throw new BusinessException(ErrorCode.BUDGET_EXHAUSTED);
             // No shell, URL, credentials, or client-controlled executable parameters.
             process = new ProcessBuilder(python, "-B", script, "--node", node,"--timeout-ms",Long.toString(Math.min(timeoutMillis,8000)))
                     .redirectError(ProcessBuilder.Redirect.DISCARD).start();

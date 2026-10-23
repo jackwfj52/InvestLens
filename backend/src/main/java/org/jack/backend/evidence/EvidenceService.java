@@ -34,7 +34,8 @@ public class EvidenceService {
     /** Internal entry point; caller cannot supply permissions, prices, owner, quality or arbitrary URLs. */
     @Transactional
     public Snapshot freeze(String portfolioSnapshotId, List<Query> queries, DataMode mode) {
-        return freezeUsing(portfolioSnapshotId,queries,mode,inspection::inspect);
+        if(mode==DataMode.REPLAY && queries!=null && !queries.isEmpty())throw new BusinessException(ErrorCode.DATA_UNUSABLE);
+        return freezeUsing(portfolioSnapshotId,queries,mode,query->inspection.inspect(query,mode));
     }
     @Transactional
     public Snapshot freezeCollected(String portfolioSnapshotId,List<Query> queries,DataMode mode,Map<Query,MarketQuality.Result> results) {
@@ -110,6 +111,29 @@ public class EvidenceService {
 
     @Transactional(readOnly = true)
     public Evidence evidence(String id) { return decode(mapper.evidence(id, owner.id()), Evidence.class); }
+
+    @Transactional
+    public Snapshot reuse(String sourceId,String portfolioId) {
+        var source=replay(sourceId);var target=portfolios.getSnapshot(portfolioId);var original=source.portfolio();
+        if(target.dataMode()!=DataMode.REPLAY || source.snapshot().dataMode()==DataMode.SYNTHETIC
+                || !target.baseCurrency().equals(original.baseCurrency()) || target.valuationBasis()!=original.valuationBasis()
+                || !target.totalValue().equals(original.totalValue()) || !target.asOf().equals(original.asOf()) || !target.positions().equals(original.positions()))throw new BusinessException(ErrorCode.SNAPSHOT_MISMATCH);
+        var inputs=new ArrayList<MarketInput>();var now=LocalDateTime.ofInstant(Instant.now().truncatedTo(ChronoUnit.MILLIS),ZoneOffset.UTC);
+        for(var input:source.snapshot().marketInputs()) {
+            var previous=evidence(input.evidenceRef());String payload=mapper.payload(previous.payloadRef(),owner.id());
+            if(previous.storagePolicy()!=StoragePolicy.PAYLOAD_ALLOWED || payload==null || !Objects.equals(previous.payloadHash(),input.inputHash()))throw new BusinessException(ErrorCode.LICENSE_BLOCKED);
+            String id="evidence_"+UUID.randomUUID();
+            var copy=new Evidence(previous.schemaVersion(),id,null,null,previous.type(),previous.provider(),previous.sourceUrl(),previous.instrumentId(),previous.asOf(),previous.retrievedAt(),
+                    previous.quality(),DataMode.REPLAY,previous.payloadHash(),previous.storagePolicy(),id,previous.modelInputAllowed(),previous.issues(),previous.missingSessions());
+            mapper.insertEvidence(id,owner.id(),copy.storagePolicy().name(),json.writeValueAsString(copy),now);
+            if(mapper.insertPayload(id,payload)!=1)throw new BusinessException(ErrorCode.INVALID_STATE);
+            inputs.add(new MarketInput(input.instrumentId(),id,input.quality(),input.inputHash(),id));
+        }
+        String hash=inputHash(target,DataMode.REPLAY,source.marketInputs(),source.snapshot().engineVersion());
+        var snapshot=new Snapshot("1.0.0","calculation_snapshot_"+UUID.randomUUID(),CanonicalJson.ALGORITHM,source.snapshot().engineVersion(),
+                new PortfolioRef(target.snapshotId(),target.version(),target.contentHash()),DataMode.REPLAY,MarketData.timestamp(now.toInstant(ZoneOffset.UTC)),hash,true,inputs,List.of());
+        mapper.insertSnapshot(snapshot.snapshotId(),owner.id(),target.snapshotId(),hash,json.writeValueAsString(snapshot),now);return snapshot;
+    }
 
     @Transactional(readOnly = true)
     public Snapshot snapshot(String id) { return decode(mapper.snapshot(id, owner.id()), Snapshot.class); }

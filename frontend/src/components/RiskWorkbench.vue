@@ -7,6 +7,7 @@ import type { InputContext, CalculationSnapshot, Bundle } from '../services/risk
 import { assets } from '../services/researchInputs.ts'
 import MetricCards from './MetricCards.vue'
 import ScenarioComparison from './ScenarioComparison.vue'
+import DataModeBadge from './DataModeBadge.vue'
 
 const props = defineProps<{ context: InputContext }>()
 const emit = defineEmits<{ scenario: [id: string | undefined] }>()
@@ -95,6 +96,7 @@ onScopeDispose(() => clearTimeout(debounce))
 <template>
   <section class="card input-card" aria-labelledby="risk-input-title">
     <div class="section-title"><h2 id="risk-input-title">03 固定输入与来源</h2><span class="outline-label">{{ activePortfolio?.dataMode ?? '尚无组合' }}</span></div>
+    <DataModeBadge v-if="activePortfolio" :mode="activePortfolio.dataMode" />
     <p v-if="activePortfolio" class="saved-meta">模式 {{ activePortfolio.dataMode }} · 组合 v{{ activePortfolio.version }} · {{ activePortfolio.asOf }}<br />快照 {{ activePortfolio.snapshotId }}<br />内容 {{ activePortfolio.contentHash }}</p>
     <p v-else class="hint">先保存组合，再保存并确认决策。</p>
     <p v-if="!context.ready" class="hint">当前输入尚未确认或存在未保存修改。完成保存和确认后可计算情景。</p>

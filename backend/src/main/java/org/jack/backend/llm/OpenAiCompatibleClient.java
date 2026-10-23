@@ -20,6 +20,10 @@ public class OpenAiCompatibleClient implements LlmClient {
     private final boolean enabled;
     private final boolean disableThinking;
     private final Clock clock;
+    private org.jack.backend.infrastructure.resilience.ExternalAccountBudget accountBudget;
+    private int perMinute;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void accountBudget(org.jack.backend.infrastructure.resilience.ExternalAccountBudget budget,@Value("${investlens.llm.calls-per-minute:30}") int limit){this.accountBudget=budget;this.perMinute=limit;}
     private final HttpClient http=HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();
     public OpenAiCompatibleClient(ObjectMapper json,Clock clock,
             @Value("${LLM_BASE_URL:}") String baseUrl,
@@ -33,6 +37,7 @@ public class OpenAiCompatibleClient implements LlmClient {
     @Override public Reply complete(Request request,long timeoutMillis) {
         if(!enabled || key.isBlank() || model.isBlank() || baseUrl.isBlank())throw new BusinessException(ErrorCode.PROVIDER_NOT_CONFIGURED);
         if(timeoutMillis<=0)throw new BusinessException(ErrorCode.BUDGET_EXHAUSTED);
+        long deadline=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(Math.min(30000,timeoutMillis));
         URI uri;
         try {
             uri=URI.create(baseUrl.replaceAll("/+$","")+"/chat/completions");
@@ -45,12 +50,15 @@ public class OpenAiCompatibleClient implements LlmClient {
                 "messages",List.of(Map.of("role","system","content",request.system()),Map.of("role","user","content",request.input()))));
         if(disableThinking)payload.put("thinking",Map.of("type","disabled"));
         String body=json.writeValueAsString(payload);
-        var wire=HttpRequest.newBuilder(uri).timeout(Duration.ofMillis(Math.min(30000,timeoutMillis)))
+        if(accountBudget!=null)accountBudget.take(baseUrl+"|"+key,perMinute);
+        long remaining=TimeUnit.NANOSECONDS.toMillis(deadline-System.nanoTime());
+        if(remaining<=0)throw new BusinessException(ErrorCode.BUDGET_EXHAUSTED);
+        var wire=HttpRequest.newBuilder(uri).timeout(Duration.ofMillis(remaining))
                 .header("Authorization","Bearer "+key).header("Content-Type","application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body)).build();
         var pending=http.sendAsync(wire,info->new LimitedBody());
         HttpResponse<byte[]> response;
-        try{response=pending.get(Math.min(30000,timeoutMillis),TimeUnit.MILLISECONDS);}
+        try{response=pending.get(Math.max(1,deadline-System.nanoTime()),TimeUnit.NANOSECONDS);}
         catch(InterruptedException interrupted){pending.cancel(true);Thread.currentThread().interrupt();throw new BusinessException(ErrorCode.UPSTREAM_TIMEOUT);}
         catch(TimeoutException timeout){pending.cancel(true);throw new UpstreamFailure(ErrorCode.UPSTREAM_TIMEOUT,true,0);}
         catch(ExecutionException failure){

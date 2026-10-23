@@ -3,6 +3,7 @@ import { computed, ref, watch, onScopeDispose } from 'vue'
 import { reportApi, referenceId, reportMatches } from '../services/reports.ts'
 import type { Report, EvidenceBoard, Figure } from '../services/reports.ts'
 import type { Run } from '../services/runs.ts'
+import DataModeBadge from './DataModeBadge.vue'
 import { safeLink, displayNumber } from '../services/riskResearch.ts'
 const props = defineProps<{ run?: Run }>()
 const report = ref<Report>(), board = ref<EvidenceBoard>(), figures = ref<Figure[]>([]), error = ref(''), loading = ref(false)
@@ -33,7 +34,7 @@ onScopeDispose(() => { ++generation; controller?.abort() })
     <p v-else-if="error" class="error-text" role="alert">{{ error }}</p>
     <p v-else-if="!report">{{ run && ['FAILED','CANCELLED'].includes(run.status) ? '任务已停止，没有已发布报告。研究检查点仍保留。' : '选择历史报告，或等待后台任务完成。读取不会重新运行研究。' }}</p>
     <template v-if="report">
-      <p class="outline-label">{{ report.status }} · {{ report.dataMode }} · 数据质量 {{ report.dataQuality }} · {{ report.generationMode }}</p>
+      <p class="outline-label">{{ report.status }} · 数据质量 {{ report.dataQuality }} · {{ report.generationMode }}</p><DataModeBadge :mode="report.dataMode" />
       <p>决策 v{{ report.decisionRef.version }} / 组合 v{{ report.portfolioRef.version }} · 发布 {{ report.publishedAt }}</p>
       <p class="hash-text">{{ report.reportId }}<br />冻结 {{ report.researchSnapshotId }}<br />{{ report.snapshotHash }}</p>
       <h3>条件化判断：{{ report.verdict.verdict }}</h3><p>{{ report.verdict.thesisAssessment }}</p>

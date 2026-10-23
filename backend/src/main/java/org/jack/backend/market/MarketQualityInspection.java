@@ -14,15 +14,20 @@ public class MarketQualityInspection {
     private final MarketDataProvider provider;
     private final MarketQualityService quality;
     private final UsEquitiesCalendar calendar;
+    private MarketHistoryCache cache;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void cache(MarketHistoryCache cache){this.cache=cache;}
     public MarketQualityInspection(MarketInstrumentCatalog catalog, MarketDataProvider provider, MarketQualityService quality, UsEquitiesCalendar calendar) {
         this.catalog = catalog; this.provider = provider; this.quality = quality; this.calendar = calendar;
     }
     public UsEquitiesCalendar.Definition calendar() { return calendar.definition(); }
     public Result inspect(Query query) {
-        return inspectUsing(query,null);
+        return inspectUsing(query,null,org.jack.backend.portfolio.PortfolioDtos.DataMode.LIVE);
     }
-    public Result inspect(Query query,long timeoutMillis) { return inspectUsing(query,timeoutMillis); }
-    private Result inspectUsing(Query query,Long timeoutMillis) {
+    public Result inspect(Query query,long timeoutMillis) { return inspectUsing(query,timeoutMillis,org.jack.backend.portfolio.PortfolioDtos.DataMode.LIVE); }
+    public Result inspect(Query query,org.jack.backend.portfolio.PortfolioDtos.DataMode mode) { return inspectUsing(query,null,mode); }
+    private Result inspectUsing(Query query,Long timeoutMillis,org.jack.backend.portfolio.PortfolioDtos.DataMode mode) {
+        if(mode==org.jack.backend.portfolio.PortfolioDtos.DataMode.REPLAY)throw new org.jack.backend.common.exception.BusinessException(org.jack.backend.common.exception.ErrorCode.DATA_UNUSABLE);
         MarketWindow.validate(query, Clock.systemUTC());
         Candidate candidate = catalog.requireCandidate(query.instrumentId());
         if (!"QUALIFIED".equals(candidate.qualification()) || !candidate.mainlandAccessVerified()
@@ -36,7 +41,8 @@ public class MarketQualityInspection {
                     false, ReturnBasis.UNKNOWN, candidate.instrument(), query.start(), query.end(), null, null, null,
                     0, 0, 0, 0, List.of(), issues, List.of());
         }
-        History history = timeoutMillis==null?provider.history(query):provider.history(query,timeoutMillis);
+        History history = cache!=null && !"SYNTHETIC".equals(candidate.instrument().provider())?cache.load(query,candidate,mode,timeoutMillis==null?8000:timeoutMillis)
+                :timeoutMillis==null?provider.history(query):provider.history(query,timeoutMillis);
         MarketWindow.requireMatching(query, history, candidate);
         return quality.assess(history, Instant.now());
     }

@@ -7,6 +7,7 @@ import RiskWorkbench from '../components/RiskWorkbench.vue'
 import RunControls from '../components/RunControls.vue'
 import ReportPanel from '../components/ReportPanel.vue'
 import ReportHistory from '../components/ReportHistory.vue'
+import ResilienceStatus from '../components/ResilienceStatus.vue'
 import type { Run } from '../services/runs.ts'
 import type { InputContext } from '../services/riskResearch.ts'
 const context = ref<InputContext>({ ready: false })
@@ -46,6 +47,7 @@ onMounted(execute)
   </section>
 
   <ResearchInputs @context="context = $event" />
+  <ResilienceStatus />
   <RiskWorkbench :context="context" @scenario="scenarioId = $event" />
   <RunControls :context="context" :scenario-id="scenarioId" :opened-run="openedRun" @run="activeRun = $event" />
   <div class="report-layout"><ReportHistory @open="openRun" /><ReportPanel :run="activeRun" /></div>

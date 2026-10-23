@@ -14,6 +14,7 @@ import static org.jack.backend.evidence.EvidenceData.*;
 @RestController
 @RequestMapping("/api")
 public class EvidenceController {
+    public record ReplayRequest(@jakarta.validation.constraints.NotBlank @Pattern(regexp=ID) String portfolioSnapshotId) { }
     private final EvidenceService service;
     private final PortfolioService portfolios;
     public EvidenceController(EvidenceService service, PortfolioService portfolios) { this.service = service; this.portfolios = portfolios; }
@@ -35,5 +36,9 @@ public class EvidenceController {
     @GetMapping("/calculation-snapshots/{id}/inputs")
     public ResponseEntity<ApiResponse<Replay>> replay(@PathVariable @Pattern(regexp = ID) String id) {
         return ApiResponses.ok(service.replay(id));
+    }
+    @PostMapping("/calculation-snapshots/{id}/replay")
+    public ResponseEntity<ApiResponse<Snapshot>> reuse(@PathVariable @Pattern(regexp=ID) String id,@Valid @RequestBody ReplayRequest request) {
+        var snapshot=service.reuse(id,request.portfolioSnapshotId());return ApiResponses.created(URI.create("/api/calculation-snapshots/"+snapshot.snapshotId()),snapshot);
     }
 }

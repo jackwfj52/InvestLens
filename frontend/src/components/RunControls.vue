@@ -5,6 +5,7 @@ import type { RunEvent, ProgressMode } from '../services/progress.ts'
 import type { InputContext } from '../services/riskResearch.ts'
 import { loadIntent, runApi, runIntent, saveIntent, rememberRun, lastRun } from '../services/runs.ts'
 import type { Run, RunIntent } from '../services/runs.ts'
+import DataModeBadge from './DataModeBadge.vue'
 const props = defineProps<{ context: InputContext; scenarioId?: string; openedRun?: Run }>()
 const emit = defineEmits<{ run: [value: Run | undefined] }>()
 const run = ref<Run>(), busy = ref(false), error = ref('')
@@ -69,6 +70,7 @@ async function refresh() {
     <p v-if="run" class="quiet" role="status">进度连接：{{ connection }}</p>
     <ol v-if="events.length" class="progress-events"><li v-for="event in events" :key="event.eventId">{{ event.createdAt }} · {{ event.stage ?? '队列' }} · {{ event.type }} · {{ event.status }}</li></ol>
     <div v-if="run" role="status" aria-live="polite">
+      <DataModeBadge :mode="run.dataMode" />
       <p>任务 {{ run.runId }} · {{ run.dataMode }} · {{ run.status }} · {{ run.stage ?? '排队中' }}</p>
       <p>固定决策 v{{ run.decisionVersion }} / 组合 v{{ run.portfolioVersion }} · 行情尝试 {{ run.budget.dataAttempts }} / 8 · 模型尝试 {{ run.budget.modelAttempts }} / 5</p>
       <p v-if="run.errorCode">停止原因：{{ run.errorCode }}。{{ run.reportId ? '' : '当前没有已发布报告。' }}</p>
