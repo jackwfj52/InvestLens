@@ -25,6 +25,9 @@ public class PreparationHandler implements WorkflowHandler {
     private org.jack.backend.agent.RoleReviewService reviews;
     @org.springframework.beans.factory.annotation.Autowired
     public void roleReviews(org.jack.backend.agent.RoleReviewService reviews){this.reviews=reviews;}
+    private org.jack.backend.report.ReportCandidates candidates;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void reportCandidates(org.jack.backend.report.ReportCandidates candidates){this.candidates=candidates;}
     public PreparationHandler(DecisionService decisions,PortfolioService portfolios,org.jack.backend.agent.planner.PlannerService planner,
             boolean modelEnabled){this(decisions,portfolios,planner,modelEnabled,null,null,null,null,null,null,null);}
     @org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +41,10 @@ public class PreparationHandler implements WorkflowHandler {
     @Override public Result execute(WorkflowClaimService.Claim claim) {
         var r=claim.run();var d=decisions.requireConfirmed(r.decisionId(),r.decisionVersion());var p=portfolios.getSnapshot(r.portfolioSnapshotId());
         String scenarioId=research==null?null:research.scenario(r.runId(),owner.id());
+        if(r.researchSnapshotId()!=null && claim.step().stepKey()==StepKey.JUDGE) {
+            var candidate=candidates.assemble(claim,modelEnabled);
+            return new Result(json.convertValue(json.valueToTree(candidate),new tools.jackson.core.type.TypeReference<Map<String,Object>>(){}),candidate.state().equals("FAILED")?null:StepKey.VALIDATE,candidate.state().equals("FAILED")?"DATA_UNUSABLE":null);
+        }
         if(r.researchSnapshotId()!=null && (claim.step().stepKey()==StepKey.BULL || claim.step().stepKey()==StepKey.BEAR)) {
             var review=reviews.review(claim,modelEnabled);
             return new Result(json.convertValue(json.valueToTree(review),new tools.jackson.core.type.TypeReference<Map<String,Object>>(){}),claim.step().stepKey()==StepKey.BULL?StepKey.BEAR:StepKey.JUDGE,null);
