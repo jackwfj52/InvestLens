@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "probeType": "market",
+  "observedAt": "2026-10-23T09:51:15.432Z",
+  "networkContext": {
+    "proxyPolicy": "DISABLED",
+    "mainlandAccessVerified": false,
+    "executionLocation": "UNVERIFIED",
+    "transparentTunnelExcluded": false
+  },
+  "provider": "baidu",
+  "technicalStatus": "BLOCKED",
+  "qualificationStatus": "PENDING_USAGE_AND_DATA_REVIEW",
+  "productionAllowlist": [],
+  "networkRequirement": "CN_MAINLAND_DIRECT",
+  "diagnosticOnly": false,
+  "requestedWindow": {
+    "start": "2026-06-24",
+    "end": "2026-10-22",
+    "interval": "1d"
+  },
+  "rawPayloadStored": false,
+  "results": [
+    {
+      "role": "STOCK",
+      "symbol": "AAPL",
+      "status": "BLOCKED",
+      "failureCode": "ACCESS_DENIED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 403,
+      "latencyMs": 109,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "redirectHost": null
+    },
+    {
+      "role": "GOLD_ETF",
+      "symbol": "GLD",
+      "status": "BLOCKED",
+      "failureCode": "ACCESS_DENIED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 403,
+      "latencyMs": 94,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "redirectHost": null
+    },
+    {
+      "role": "SILVER_ETF",
+      "symbol": "SLV",
+      "status": "BLOCKED",
+      "failureCode": "ACCESS_DENIED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 403,
+      "latencyMs": 109,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "redirectHost": null
+    }
+  ]
+}

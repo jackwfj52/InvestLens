@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "probeType": "llm",
+  "observedAt": "2026-10-23T09:35:49.183Z",
+  "technicalStatus": "PASSED",
+  "requestedModel": "deepseek-flash",
+  "requestedFormat": "json_object",
+  "serverStrictSchemaGuaranteed": false,
+  "rawPayloadStored": false,
+  "attempts": 1,
+  "socketTimeoutSeconds": 30,
+  "httpStatus": 200,
+  "latencyMs": 687,
+  "creditsUsed": null,
+  "creditsLeft": null,
+  "retryAfter": null,
+  "failureCode": null,
+  "finishReason": "stop",
+  "returnedModel": "deepseek-flash",
+  "usage": {
+    "prompt_tokens": 55,
+    "completion_tokens": 12,
+    "total_tokens": 67
+  },
+  "jsonParsePassed": true,
+  "localShapeValidationPassed": true,
+  "networkContext": {
+    "proxyPolicy": "SYSTEM_DEFAULT",
+    "mainlandAccessVerified": false,
+    "executionLocation": "UNVERIFIED",
+    "transparentTunnelExcluded": false,
+    "note": "Observed before the mainland direct-access requirement; not acceptance evidence."
+  }
+}

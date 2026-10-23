@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "probeType": "market",
+  "observedAt": "2026-10-23T09:35:16.353Z",
+  "provider": "twelvedata",
+  "technicalStatus": "BLOCKED",
+  "qualificationStatus": "PENDING_USAGE_AND_DATA_REVIEW",
+  "productionAllowlist": [],
+  "requestedWindow": {
+    "start": "2026-06-24",
+    "end": "2026-10-22",
+    "interval": "1d"
+  },
+  "rawPayloadStored": false,
+  "results": [
+    {
+      "role": "STOCK",
+      "symbol": "AAPL",
+      "status": "BLOCKED",
+      "failureCode": "PROVIDER_NOT_CONFIGURED",
+      "attempts": 0
+    },
+    {
+      "role": "GOLD_ETF",
+      "symbol": "GLD",
+      "status": "BLOCKED",
+      "failureCode": "PROVIDER_NOT_CONFIGURED",
+      "attempts": 0
+    },
+    {
+      "role": "SILVER_ETF",
+      "symbol": "SLV",
+      "status": "BLOCKED",
+      "failureCode": "PROVIDER_NOT_CONFIGURED",
+      "attempts": 0
+    }
+  ],
+  "networkContext": {
+    "proxyPolicy": "NOT_USED",
+    "mainlandAccessVerified": false,
+    "executionLocation": "UNVERIFIED",
+    "transparentTunnelExcluded": false,
+    "note": "No requests were sent because the credential is not configured."
+  }
+}

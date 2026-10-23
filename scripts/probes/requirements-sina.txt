@@ -1,0 +1,3 @@
+# Only the pinned decoder literal is read. Do not import akshare or its providers.
+# Install with --no-deps; also requires Node.js 18+ and Python 3.10+.
+akshare==1.19.1

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "probeType": "crypto",
+  "observedAt": "2026-10-23T09:54:43.258Z",
+  "networkContext": {
+    "proxyPolicy": "DISABLED",
+    "mainlandAccessVerified": false,
+    "executionLocation": "UNVERIFIED",
+    "transparentTunnelExcluded": false
+  },
+  "provider": "binance-public-market-data",
+  "technicalStatus": "PASSED",
+  "scope": "CONDITIONAL_CRYPTO_FALLBACK",
+  "p0ScopeChanged": false,
+  "networkRequirement": "CN_MAINLAND_DIRECT",
+  "qualificationStatus": "PENDING_NETWORK_USAGE_AND_SCOPE_REVIEW",
+  "quoteAsset": "USDT",
+  "quoteAssetIsUSD": false,
+  "calendar": "UTC_24X7",
+  "annualizationFactor": 365,
+  "productionAllowlist": [],
+  "rawPayloadStored": false,
+  "results": [
+    {
+      "symbol": "BTCUSDT",
+      "status": "PASSED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 200,
+      "latencyMs": 375,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "failureCode": null,
+      "redirectHost": null,
+      "sampleCount": 64,
+      "firstSession": "2026-08-20",
+      "lastSession": "2026-10-22",
+      "minimumVolatilitySamplesAvailable": true,
+      "calendarContinuityVerified": false,
+      "corporateActionsVerified": false
+    },
+    {
+      "symbol": "ETHUSDT",
+      "status": "PASSED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 200,
+      "latencyMs": 219,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "failureCode": null,
+      "redirectHost": null,
+      "sampleCount": 64,
+      "firstSession": "2026-08-20",
+      "lastSession": "2026-10-22",
+      "minimumVolatilitySamplesAvailable": true,
+      "calendarContinuityVerified": false,
+      "corporateActionsVerified": false
+    }
+  ]
+}

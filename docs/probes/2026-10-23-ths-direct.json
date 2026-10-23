@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "probeType": "site",
+  "observedAt": "2026-10-23T09:50:32.231Z",
+  "networkContext": {
+    "proxyPolicy": "DISABLED",
+    "mainlandAccessVerified": false,
+    "executionLocation": "UNVERIFIED",
+    "transparentTunnelExcluded": false
+  },
+  "provider": "ths",
+  "technicalStatus": "INCOMPLETE",
+  "qualificationStatus": "PENDING_HISTORY_AND_USAGE_REVIEW",
+  "productionAllowlist": [],
+  "rawPayloadStored": false,
+  "results": [
+    {
+      "symbol": "AAPL",
+      "kind": "QUOTE_PAGE",
+      "status": "BLOCKED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 302,
+      "latencyMs": 110,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "failureCode": "REDIRECT_NOT_FOLLOWED",
+      "redirectHost": "stockpage.10jqka.com.cn"
+    },
+    {
+      "symbol": "GLD",
+      "kind": "QUOTE_PAGE",
+      "status": "BLOCKED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 302,
+      "latencyMs": 78,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "failureCode": "REDIRECT_NOT_FOLLOWED",
+      "redirectHost": "stockpage.10jqka.com.cn"
+    },
+    {
+      "symbol": "SLV",
+      "kind": "QUOTE_PAGE",
+      "status": "BLOCKED",
+      "attempts": 1,
+      "socketTimeoutSeconds": 8,
+      "httpStatus": 302,
+      "latencyMs": 109,
+      "creditsUsed": null,
+      "creditsLeft": null,
+      "retryAfter": null,
+      "failureCode": "REDIRECT_NOT_FOLLOWED",
+      "redirectHost": null
+    }
+  ]
+}
