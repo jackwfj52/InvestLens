@@ -20,6 +20,8 @@ class WorkflowResilienceTests extends WorkflowIntegrationSupport {
     @Autowired CallBudgetService budgets;
     @Autowired BudgetedCalls calls;
     @Autowired CallBudgetTests.MutableClock clock;
+    @Autowired org.jack.backend.agent.planner.PlannerService planner;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean org.jack.backend.llm.LlmClient client;
     @BeforeEach void reset(){clock.instant=java.time.Instant.parse("2026-10-23T13:00:00Z");}
     @Test void cancellationIsIdempotentAndFencesDispatchedCallsAndWrites() throws Exception {
         var run=queued(fixture());var claim=claims.claimNext();var permit=budgets.reserve(claim,Request.model(Purpose.STANDARD));
@@ -70,6 +72,29 @@ class WorkflowResilienceTests extends WorkflowIntegrationSupport {
         var run=queued(fixture());var claim=claims.claimNext();checkpoints.save(claim,handler.execute(claim));
         jdbc.update("UPDATE step_outputs SET output_hash=? WHERE run_id=?","sha256:"+"0".repeat(64),run.runId());
         assertThat(claims.claimNext()).isNull();assertThat(store.get(run.runId()).errorCode()).isEqualTo("SNAPSHOT_MISMATCH");
+    }
+    org.jack.backend.llm.LlmClient.Reply reply(String content) {
+        return new org.jack.backend.llm.LlmClient.Reply(content,"stub-v1","stop",new org.jack.backend.llm.LlmClient.Usage(4,3,7));
+    }
+    @Test void plannerRepairsOnceAndPersistsUsageWithinGlobalBudget() throws Exception {
+        var run=queued(fixture());var claim=claims.claimNext();var decision=decisions.requireConfirmed(run.decisionId(),run.decisionVersion());
+        String valid=json.writeValueAsString(Map.of("schemaVersion","1.0.0","planId","plan_test","runId",run.runId(),
+                "decisionRef",Map.of("decisionId",run.decisionId(),"version",run.decisionVersion()),
+                "hypothesisIds",decision.hypotheses().stream().map(h->h.hypothesisId()).toList(),"dataNeeds",List.of(),
+                "steps",List.of(Map.of("stepKey","portfolio","tool","Portfolio.getSnapshot","dependsOn",List.of())),"promptVersion","planner-v1"));
+        org.mockito.Mockito.when(client.complete(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.anyLong())).thenReturn(reply("invalid"),reply(valid));
+        var plan=planner.plan(claim);assertThat(plan).containsEntry("runId",run.runId());
+        assertThat(store.get(run.runId()).schemaRepairs()).isEqualTo(1);assertThat(store.get(run.runId()).modelAttempts()).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT SUM(total_tokens) FROM tool_calls WHERE run_id=?",Long.class,run.runId())).isEqualTo(14);
+        checkpoints.save(claim,new WorkflowHandler.Result(plan,StepKey.RESEARCH,null));
+        assertThat(store.step(run.runId(),StepKey.PLAN).status()).isEqualTo(StepStatus.SUCCEEDED);
+    }
+    @Test void secondInvalidPlannerOutputStopsWithoutThirdCall() throws Exception {
+        var run=queued(fixture());var claim=claims.claimNext();
+        org.mockito.Mockito.when(client.complete(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.anyLong())).thenReturn(reply("{}"));
+        assertThatThrownBy(()->planner.plan(claim)).isInstanceOf(BusinessException.class);
+        org.mockito.Mockito.verify(client,org.mockito.Mockito.times(2)).complete(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.anyLong());
+        assertThat(store.get(run.runId()).schemaRepairs()).isEqualTo(1);
     }
     @Test void cancelApiReturnsTerminalStateAndUnknownRunIs404() throws Exception {
         var run=queued(fixture());var http=java.net.http.HttpClient.newHttpClient();

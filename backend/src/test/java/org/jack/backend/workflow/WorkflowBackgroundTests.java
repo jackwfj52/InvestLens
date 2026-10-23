@@ -16,7 +16,7 @@ import static org.jack.backend.workflow.WorkflowData.*;
 class WorkflowBackgroundTests extends WorkflowIntegrationSupport {
     @MockitoBean WorkflowHandler handler;
     @Test void acceptedHttpReturnsWhileBackgroundContinuesThroughRealCheckpoints() throws Exception {
-        var f=fixture();var entered=new CountDownLatch(1);var release=new CountDownLatch(1);var real=new PreparationHandler(decisions,portfolios);
+        var f=fixture();var entered=new CountDownLatch(1);var release=new CountDownLatch(1);var real=new PreparationHandler(decisions,portfolios,null,false);
         when(handler.execute(any())).thenAnswer(call->{var c=(WorkflowClaimService.Claim)call.getArgument(0);if(c.step().stepKey()==StepKey.PLAN){entered.countDown();release.await(10,TimeUnit.SECONDS);}return real.execute(c);});
         try {
             var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/decisions/"+f.decisionId()+"/runs"))

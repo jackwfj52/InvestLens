@@ -13,9 +13,15 @@ import static org.jack.backend.workflow.WorkflowData.*;
 public class PreparationHandler implements WorkflowHandler {
     private final DecisionService decisions;
     private final PortfolioService portfolios;
-    public PreparationHandler(DecisionService decisions,PortfolioService portfolios){this.decisions=decisions;this.portfolios=portfolios;}
+    private final org.jack.backend.agent.planner.PlannerService planner;
+    private final boolean modelEnabled;
+    public PreparationHandler(DecisionService decisions,PortfolioService portfolios,org.jack.backend.agent.planner.PlannerService planner,
+            @org.springframework.beans.factory.annotation.Value("${INVESTLENS_LLM_ENABLED:false}") boolean modelEnabled){
+        this.decisions=decisions;this.portfolios=portfolios;this.planner=planner;this.modelEnabled=modelEnabled;
+    }
     @Override public Result execute(WorkflowClaimService.Claim claim) {
         var r=claim.run();var d=decisions.requireConfirmed(r.decisionId(),r.decisionVersion());var p=portfolios.getSnapshot(r.portfolioSnapshotId());
+        if(claim.step().stepKey()==StepKey.PLAN && modelEnabled)return new Result(planner.plan(claim),StepKey.RESEARCH,null);
         if(claim.step().stepKey()==StepKey.PLAN) return new Result(Map.of("schemaVersion","1.0.0","kind","FIXED_INPUT_PLAN",
                 "decisionId",d.decisionId(),"decisionVersion",d.version(),"portfolioSnapshotId",p.snapshotId(),"portfolioHash",p.contentHash(),
                 "dataMode",p.dataMode().name(),"modelSteps","DISABLED","gaps",List.of("MODEL_HANDLERS_NOT_IMPLEMENTED")),StepKey.RESEARCH,null);

@@ -1,0 +1,139 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "planId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "decisionRef": {
+      "type": "object",
+      "properties": {
+        "decisionId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "decisionId",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "hypothesisIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+      },
+      "minItems": 0
+    },
+    "dataNeeds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "instrumentId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "window": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              },
+              "interval": {
+                "const": "1d"
+              }
+            },
+            "required": [
+              "start",
+              "end",
+              "interval"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "instrumentId",
+          "purpose",
+          "window"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 3
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stepKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+          },
+          "tool": {
+            "enum": [
+              "Market.getHistory",
+              "Portfolio.getSnapshot",
+              "Quant.calculate",
+              "Quant.runScenario"
+            ]
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "stepKey",
+          "tool",
+          "dependsOn"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 6
+    },
+    "promptVersion": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "planId",
+    "runId",
+    "decisionRef",
+    "hypothesisIds",
+    "dataNeeds",
+    "steps",
+    "promptVersion"
+  ],
+  "additionalProperties": false
+}
