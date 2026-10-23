@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.*;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataAccessException;
 import tools.jackson.databind.node.ObjectNode;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.jack.backend.workflow.WorkflowData.*;
 
 @Import(WorkflowIntegrationTests.FaultConfiguration.class)
+@TestPropertySource(properties="investlens.workflow.scheduler.enabled=false")
 class WorkflowIntegrationTests extends CalculationIntegrationSupport {
     @Autowired WorkflowStore store;
     @Autowired WorkflowMapper mapper;

@@ -27,6 +27,7 @@ public abstract class WorkflowIntegrationSupport extends CalculationIntegrationS
     }
     @AfterEach void cleanRunRows() {
         runIds.forEach(id->{
+            jdbc.update("DELETE FROM step_outputs WHERE run_id=?",id);
             jdbc.update("DELETE FROM idempotency_keys WHERE run_id=?",id);
             jdbc.update("DELETE FROM run_metric_bundles WHERE run_id=?",id);jdbc.update("DELETE FROM run_calculation_inputs WHERE run_id=?",id);
             jdbc.update("DELETE FROM run_events WHERE run_id=?",id);jdbc.update("DELETE FROM run_steps WHERE run_id=?",id);jdbc.update("DELETE FROM research_runs WHERE run_id=?",id);

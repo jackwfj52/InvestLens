@@ -6,6 +6,10 @@ import static org.jack.backend.workflow.WorkflowData.*;
 
 @Mapper
 public interface WorkflowMapper {
+    @Insert("INSERT INTO step_outputs (output_id,run_id,step_id,execution_version,input_hash,output_hash,output_json,created_at) VALUES (#{id},#{s.runId},#{s.stepId},#{s.executionVersion},#{s.inputHash},#{hash},#{body},#{s.updatedAt})")
+    void insertOutput(@Param("id") String id,@Param("s") Step step,@Param("hash") String hash,@Param("body") String body);
+    @Select("SELECT output_json FROM step_outputs WHERE output_id=#{id}")
+    String output(@Param("id") String id);
     @Select("""
             SELECT r.run_id FROM research_runs r
             WHERE r.owner_id=#{owner} AND r.status IN ('QUEUED','RUNNING')

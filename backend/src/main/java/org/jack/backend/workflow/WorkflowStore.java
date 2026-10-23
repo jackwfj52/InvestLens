@@ -72,6 +72,14 @@ public class WorkflowStore {
         mapper.insertStep(step); return step;
     }
     @Transactional
+    public Step addNextStep(String id, StepKey key, String inputHash) {
+        Run run=locked(id);
+        if(run.status()!=RunStatus.RUNNING || key==null || inputHash==null || (run.stage()!=null && key.stage().ordinal()<run.stage().ordinal())) throw new BusinessException(ErrorCode.INVALID_STATE);
+        LocalDateTime now=now();
+        var step=new Step("step_"+UUID.randomUUID(),id,key,StepStatus.PENDING,0,inputHash,null,null,0,null,now,now);
+        mapper.insertStep(step);return step;
+    }
+    @Transactional
     public Step transitionStep(String id, StepKey key, StepStatus next, long token, LocalDateTime leaseUntil, String outputRef, String errorCode) {
         Run run = locked(id);
         if (run.status() != RunStatus.RUNNING && !(run.status() == RunStatus.QUEUED && next == StepStatus.SKIPPED)) throw new BusinessException(ErrorCode.INVALID_STATE);
@@ -88,7 +96,7 @@ public class WorkflowStore {
         if (next == StepStatus.SUCCEEDED && (outputRef == null || outputRef.isBlank())) throw new BusinessException(ErrorCode.INVALID_STATE);
         int attempt = previous.attempt() + (next == StepStatus.RUNNING ? 1 : 0);
         long version = token + (next == StepStatus.RUNNING || next == StepStatus.PENDING ? 1 : 0);
-        var updated = new Step(previous.stepId(), id, key, next, attempt, previous.inputHash(), next == StepStatus.SUCCEEDED ? outputRef : null,
+        var updated = new Step(previous.stepId(), id, key, next, attempt, previous.inputHash(), next == StepStatus.SUCCEEDED || next == StepStatus.FAILED ? outputRef : null,
                 next == StepStatus.RUNNING ? leaseUntil : null, version, errorCode, previous.createdAt(), now);
         if (mapper.updateStep(updated, previous.status(), token) != 1) throw new BusinessException(ErrorCode.VERSION_CONFLICT);
         EventType type = switch (next) { case RUNNING -> EventType.STEP_STARTED; case SUCCEEDED -> EventType.STEP_SUCCEEDED; case FAILED -> EventType.STEP_FAILED; default -> null; };
