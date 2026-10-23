@@ -1,0 +1,114 @@
+name: investlens
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  frontend:
+    image: investlens-frontend:local
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -O /dev/null http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    logging: *logging
+
+  backend:
+    image: investlens-backend:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: 8080
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-investlens}
+      MYSQL_USER: ${MYSQL_USER:-investlens}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Run scripts/dev.ps1 init first}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Run scripts/dev.ps1 init first}
+      INVESTLENS_LLM_ENABLED: ${INVESTLENS_LLM_ENABLED:-false}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-${DEEPSEEK_API_KEY:-}}
+      LLM_DISABLE_THINKING: ${LLM_DISABLE_THINKING:-false}
+      INVESTLENS_MARKET_SINA_ENABLED: ${INVESTLENS_MARKET_SINA_ENABLED:-false}
+      INVESTLENS_SINA_CACHE_SECONDS: ${INVESTLENS_SINA_CACHE_SECONDS:-0}
+      INVESTLENS_SINA_CALLS_PER_MINUTE: ${INVESTLENS_SINA_CALLS_PER_MINUTE:-60}
+      INVESTLENS_LLM_CALLS_PER_MINUTE: ${INVESTLENS_LLM_CALLS_PER_MINUTE:-30}
+      INVESTLENS_QUANT_MINIMUM_RETURN_SAMPLES: ${INVESTLENS_QUANT_MINIMUM_RETURN_SAMPLES:-30}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 35s
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/actuator/health/readiness', timeout=4).read()"]
+      interval: 5s
+      timeout: 5s
+      start_period: 60s
+      retries: 24
+    logging: *logging
+
+  mysql:
+    image: ${MYSQL_IMAGE:-mysql:8.4.13}
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-investlens}
+      MYSQL_USER: ${MYSQL_USER:-investlens}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Run scripts/dev.ps1 init first}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Run scripts/dev.ps1 init first}
+      TZ: UTC
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_0900_ai_ci, --default-time-zone=+00:00]
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql --protocol=TCP -h 127.0.0.1 -u "$$MYSQL_USER" -D "$$MYSQL_DATABASE" -Nse "SELECT 1" >/dev/null']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+    logging: *logging
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7.2.16-alpine}
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Run scripts/dev.ps1 init first}
+    command: [/bin/sh, -ec, 'exec redis-server --requirepass "$$REDIS_PASSWORD" --appendonly no --save "" --maxmemory 128mb --maxmemory-policy allkeys-lru']
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -qx PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+    logging: *logging
+
+volumes:
+  mysql_data:
