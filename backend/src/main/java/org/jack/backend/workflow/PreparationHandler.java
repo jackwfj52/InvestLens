@@ -22,6 +22,9 @@ public class PreparationHandler implements WorkflowHandler {
     private final WorkflowStore store;
     private final WorkflowMapper mapper;
     private final tools.jackson.databind.ObjectMapper json;
+    private org.jack.backend.agent.RoleReviewService reviews;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void roleReviews(org.jack.backend.agent.RoleReviewService reviews){this.reviews=reviews;}
     public PreparationHandler(DecisionService decisions,PortfolioService portfolios,org.jack.backend.agent.planner.PlannerService planner,
             boolean modelEnabled){this(decisions,portfolios,planner,modelEnabled,null,null,null,null,null,null,null);}
     @org.springframework.beans.factory.annotation.Autowired
@@ -35,6 +38,10 @@ public class PreparationHandler implements WorkflowHandler {
     @Override public Result execute(WorkflowClaimService.Claim claim) {
         var r=claim.run();var d=decisions.requireConfirmed(r.decisionId(),r.decisionVersion());var p=portfolios.getSnapshot(r.portfolioSnapshotId());
         String scenarioId=research==null?null:research.scenario(r.runId(),owner.id());
+        if(r.researchSnapshotId()!=null && (claim.step().stepKey()==StepKey.BULL || claim.step().stepKey()==StepKey.BEAR)) {
+            var review=reviews.review(claim,modelEnabled);
+            return new Result(json.convertValue(json.valueToTree(review),new tools.jackson.core.type.TypeReference<Map<String,Object>>(){}),claim.step().stepKey()==StepKey.BULL?StepKey.BEAR:StepKey.JUDGE,null);
+        }
         if(claim.step().stepKey()==StepKey.PLAN && modelEnabled)return new Result(planner.plan(claim),StepKey.RESEARCH,null);
         if(claim.step().stepKey()==StepKey.PLAN && scenarioId!=null)return new Result(Map.of("schemaVersion","1.0.0","planId","plan_"+r.runId(),"runId",r.runId(),
                 "decisionRef",Map.of("decisionId",d.decisionId(),"version",d.version()),"hypothesisIds",d.hypotheses().stream().map(h->h.hypothesisId()).toList(),"dataNeeds",List.of(),

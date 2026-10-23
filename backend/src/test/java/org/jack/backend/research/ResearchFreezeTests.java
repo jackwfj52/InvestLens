@@ -11,21 +11,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.jack.backend.workflow.WorkflowData.*;
 
-class ResearchFreezeTests extends WorkflowIntegrationSupport {
-    @Autowired protected ScenarioService scenarios;
-    @Autowired protected WorkflowClaimService claims;
-    @Autowired protected WorkflowCheckpointService checkpoints;
-    @Autowired protected WorkflowHandler handler;
-    @Autowired protected ResearchFreezeService frozen;
-    WorkflowData.Run scenarioRun() throws Exception {
-        var portfolio=portfolio();var input=snapshot(portfolio,List.of());var fixture=fixture(portfolio);
-        var scenario=scenarios.create(new ScenarioData.Create("1.0.0",fixture.decisionId(),fixture.request().decisionVersion(),input.snapshotId(),portfolio.snapshotId(),
-                List.of(new ScenarioData.Shock(GOLD,"-0.2"),new ScenarioData.Shock(SILVER,"-0.25"),new ScenarioData.Shock(CASH,"0"))));
-        evidenceIds.add(scenario.sourceEvidenceRef());
-        var run=creation.create(fixture.decisionId(),UUID.randomUUID().toString(),new RunDtos.Create("1.0.0",fixture.request().decisionVersion(),portfolio.snapshotId(),portfolio.version(),portfolio.dataMode(),scenario.scenarioId()));
-        runIds.add(run.runId());return run;
-    }
-    void throughQuant() {for(int index=0;index<3;index++){var claim=claims.claimNext();checkpoints.save(claim,handler.execute(claim));}}
+class ResearchFreezeTests extends ResearchPipelineSupport {
     @Test void freezesCanonicalManifestAndBindsOnlyRunOwnedEvidenceAndMetrics() throws Exception {
         var run=scenarioRun();throughQuant();var result=frozen.get(run.runId());
         assertThat(result.snapshot().get("snapshotHash").asString()).isEqualTo(store.get(run.runId()).snapshotHash());
