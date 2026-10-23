@@ -6,6 +6,8 @@ import static org.jack.backend.workflow.CallBudgetData.*;
 
 @Mapper
 public interface CallBudgetMapper {
+    @Update("UPDATE tool_calls SET model_name=#{r.model},finish_reason=#{r.finishReason},prompt_tokens=#{r.usage.promptTokens},completion_tokens=#{r.usage.completionTokens},total_tokens=#{r.usage.totalTokens} WHERE call_id=#{p.callId} AND run_id=#{p.runId} AND step_id=#{p.stepId} AND execution_version=#{p.executionVersion} AND kind='MODEL'")
+    int usage(@Param("p") Permit permit,@Param("r") org.jack.backend.llm.LlmClient.Reply reply);
     record Attempt(String runId,String stepId,long executionVersion,String status,LocalDateTime expiresAt) { }
     @Select("SELECT run_id AS runId,step_id AS stepId,execution_version AS executionVersion,status,expires_at AS expiresAt FROM tool_calls WHERE call_id=#{id} FOR UPDATE")
     Attempt attempt(String id);

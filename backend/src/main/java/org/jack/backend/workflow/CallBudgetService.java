@@ -58,6 +58,10 @@ public class CallBudgetService {
         return !timedOut;
     }
     @Transactional
+    public void recordUsage(Permit permit,org.jack.backend.llm.LlmClient.Reply reply) {
+        if(mapper.usage(permit,reply)!=1)throw new BusinessException(ErrorCode.VERSION_CONFLICT);
+    }
+    @Transactional
     public long dispatchTimeout(Claim claim,Permit permit) {
         beforeDispatch(claim,permit);
         return Math.max(1,Duration.between(now(),permit.expiresAt()).toMillis());
