@@ -174,7 +174,7 @@ def main():
                'executedAt': datetime.now(timezone.utc).isoformat(), 'sourceCommit': version.stdout.decode().strip(),
                'workingTreeDirty': bool(changes.stdout.strip()),
                'project': arguments.project or 'investlens', 'baseUrl': base,
-               'portfolioSnapshotId': portfolio['snapshotId'], 'decisionId': decision['decisionId'],
+               'portfolioId': portfolio['portfolioId'], 'portfolioSnapshotId': portfolio['snapshotId'], 'decisionId': decision['decisionId'],
                'calculationSnapshotId': snapshot['snapshotId'], 'scenarioId': scenario['scenarioId'],
                'runId': run_id, 'reportId': report['reportId'], 'snapshotHash': report['snapshotHash'],
                'dataMode': report['dataMode'], 'status': report['status'], 'generationMode': report['generationMode'],
