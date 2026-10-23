@@ -2,7 +2,7 @@
 
 `EvidenceService.freeze(portfolioSnapshotId, queries, dataMode)` 是内部确定性入口，固定已有组合快照、版本和内容哈希，通过已登记标的与 G10 质量门槛取得市场输入。调用方不能传价格、质量、许可、主体或 URL。每资产最多一个窗口、最多三资产，必须属于组合、同币种、模式匹配。未取得正式资格的候选只记录质量缺口，不请求外部行情。
 
-本组使用独立 `calculation_snapshot_*`，没有 Run、研究 Manifest 或 MetricBundle；它们分别在 G16—G18、G27、G13 接入。前置证据的 `runId` / `displayId` 为空，不作为 G01 已绑定 Run 的发布 Evidence。公开入口只提供读取；后续计算业务通过内部入口冻结输入。
+本组使用独立 `calculation_snapshot_*`，没有 Run、研究 Manifest 或 MetricBundle；它们分别在 G16—G18、G27、G13 接入。前置证据的 `runId` / `displayId` 为空，不作为 G01 已绑定 Run 的发布 Evidence。G11 交付时公开入口只提供读取；G13 已补充受限 `POST /api/calculation-snapshots` 来冻结服务端取得的规范输入，见 [G13](g13-metric-bundles.md)。
 
 ## 保存策略
 

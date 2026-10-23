@@ -56,6 +56,12 @@ G06 已实现 Portfolio 的 POST、PATCH 和当前 / 指定版本 GET，权重�
 | POST /api/portfolios | `{schemaVersion, name, baseCurrency, valuationBasis, totalValue, asOf, dataMode, positions}` | 201，返回 PortfolioSnapshot |
 | PATCH /api/portfolios/{id} | `{schemaVersion, expectedVersion, positions, asOf}`，产生新快照 | 200 / 409 |
 | GET /api/portfolios/{id}?version=N | 固定版本 PortfolioSnapshot；无 version 返回当前 | 200 / 404 |
+| POST /api/calculation-snapshots | G13：`{schemaVersion, portfolioSnapshotId, marketInputs:[{instrumentId,start,end}]}`；服务端固定模式与许可，返回独立 CalculationSnapshot（G11） | 201；可保存明确不可重放的缺口 |
+| GET /api/calculation-snapshots/{id} | G11：独立输入快照、来源引用与缺口 | 200 / 404 |
+| GET /api/calculation-snapshots/{id}/inputs | G11：原组合版本和允许保存的规范行情 | 200 / 404 / 422 |
+| POST /api/metric-bundles | G13：`{schemaVersion, calculationSnapshotId}`；返回独立 MetricBundle，Run/研究绑定字段暂为空 | 201；不可重放/无市场输入为 422；样本不足的单项指标为 NOT_CALCULABLE |
+| GET /api/metric-bundles/{id} | G13：原持久指标、公式版本、参数、样本数及输入哈希 | 200 / 404 |
+| GET /api/metric-policy | G13：年化因子、收益样本门槛、未提供相关性声明 | 200 |
 | POST /api/decisions/{id}/runs | `CreateRunRequest` + `Idempotency-Key`；返回 Run、Location: /api/runs/{runId} | 202（新建或复用，复用终态也返回 202） |
 | GET /api/runs/{id} | Run（含固定输入、budget、真实状态/阶段） | 200 / 404 |
 | POST /api/runs/{id}/cancel | 空 body；返回 Run。重复取消返回原 Run，已完成/失败时返回既有终态 | 200 / 404 |
