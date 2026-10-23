@@ -6,6 +6,17 @@ import static org.jack.backend.workflow.WorkflowData.*;
 
 @Mapper
 public interface WorkflowMapper {
+    @Select("""
+            SELECT r.run_id FROM research_runs r
+            WHERE r.owner_id=#{owner} AND r.status IN ('QUEUED','RUNNING')
+              AND (r.deadline_at <= #{now} OR EXISTS (SELECT 1 FROM run_steps s WHERE s.run_id=r.run_id
+                AND (s.status='PENDING' OR (s.status='RUNNING' AND s.lease_until <= #{now}))))
+              AND NOT EXISTS (SELECT 1 FROM run_steps s WHERE s.run_id=r.run_id AND s.status='RUNNING' AND s.lease_until > #{now})
+            ORDER BY r.created_at,r.run_id LIMIT 1 FOR UPDATE SKIP LOCKED
+            """)
+    String claimable(@Param("owner") String owner, @Param("now") java.time.LocalDateTime now);
+    @Select("SELECT " + STEP_COLUMNS + " FROM run_steps WHERE run_id=#{id} AND (status='PENDING' OR (status='RUNNING' AND lease_until <= #{now})) ORDER BY created_at,step_id LIMIT 1")
+    Step claimableStep(@Param("id") String id, @Param("now") java.time.LocalDateTime now);
     record KeyMapping(String requestHash, String runId) { }
     @Insert("INSERT INTO idempotency_keys (owner_id,idempotency_key,request_hash) VALUES (#{owner},#{key},#{hash}) ON DUPLICATE KEY UPDATE idempotency_key=idempotency_key")
     void reserveKey(@Param("owner") String owner,@Param("key") String key,@Param("hash") String hash);

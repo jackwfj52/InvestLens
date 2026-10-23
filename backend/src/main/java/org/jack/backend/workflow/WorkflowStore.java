@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import static org.jack.backend.workflow.WorkflowData.*;
 
-/** Internal persistence boundary for G17/G18; no HTTP creation, worker, retries or report publisher yet. */
+/** Transactional state boundary. A validated report publisher remains a separate, later capability. */
 @Service
 public class WorkflowStore {
     private final WorkflowMapper mapper;
@@ -22,9 +22,11 @@ public class WorkflowStore {
     private final PortfolioService portfolios;
     private final EvidenceService evidence;
     private final MetricService metrics;
+    private final Clock clock;
     public WorkflowStore(WorkflowMapper mapper, CurrentOwner owner, DecisionService decisions, PortfolioService portfolios,
-                         EvidenceService evidence, MetricService metrics) {
+                         EvidenceService evidence, MetricService metrics, Clock clock) {
         this.mapper = mapper; this.owner = owner; this.decisions = decisions; this.portfolios = portfolios; this.evidence = evidence; this.metrics = metrics;
+        this.clock = clock;
     }
     @Transactional
     public Run createModel(String decisionId, int version, String portfolioSnapshotId) {
@@ -82,7 +84,7 @@ public class WorkflowStore {
             if ((next == StepStatus.PENDING) != expired) throw new BusinessException(ErrorCode.INVALID_STATE);
         }
         if (next == StepStatus.PENDING && !run.deadlineAt().isAfter(now)) throw new BusinessException(ErrorCode.INVALID_STATE);
-        if (next == StepStatus.RUNNING && (leaseUntil == null || !leaseUntil.isAfter(now))) throw new BusinessException(ErrorCode.INVALID_STATE);
+        if (next == StepStatus.RUNNING && (leaseUntil == null || !leaseUntil.isAfter(now) || !run.deadlineAt().isAfter(now) || leaseUntil.isAfter(run.deadlineAt()))) throw new BusinessException(ErrorCode.INVALID_STATE);
         if (next == StepStatus.SUCCEEDED && (outputRef == null || outputRef.isBlank())) throw new BusinessException(ErrorCode.INVALID_STATE);
         int attempt = previous.attempt() + (next == StepStatus.RUNNING ? 1 : 0);
         long version = token + (next == StepStatus.RUNNING || next == StepStatus.PENDING ? 1 : 0);
@@ -127,5 +129,5 @@ public class WorkflowStore {
     }
     private static Run withSequence(Run r, long sequence) { return new Run(r.runId(), r.decisionId(), r.decisionVersion(), r.portfolioSnapshotId(), r.portfolioVersion(), r.status(), r.stage(), r.dataMode(), r.dataQuality(), r.researchSnapshotId(), r.snapshotHash(), r.reportId(), r.errorCode(), r.createdAt(), r.startedAt(), r.finishedAt(), r.deadlineAt(), r.dataAttempts(), r.modelAttempts(), r.schemaRepairs(), r.retryCount(), r.revision(), sequence); }
     private static <T> T require(T value) { if (value == null) throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND); return value; }
-    private static LocalDateTime now() { return LocalDateTime.ofInstant(Instant.now().truncatedTo(ChronoUnit.MILLIS), ZoneOffset.UTC); }
+    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant().truncatedTo(ChronoUnit.MILLIS), ZoneOffset.UTC); }
 }
