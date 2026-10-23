@@ -1,6 +1,9 @@
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import time
 from urllib.error import HTTPError, URLError
@@ -10,6 +13,7 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 HTTP = build_opener(ProxyHandler({}))
+COMPOSE_OPTIONS = ['--env-file', '.env', '-f', 'compose.yaml']
 
 
 def require(condition, message):
@@ -26,9 +30,10 @@ def base_url(value):
 
 
 def compose(*arguments):
-    result = subprocess.run(['docker', 'compose', '--env-file', '.env', '-f', 'compose.yaml', *arguments],
+    result = subprocess.run(['docker', 'compose', *COMPOSE_OPTIONS, *arguments],
                             cwd=ROOT, capture_output=True, timeout=240, check=False)
     require(result.returncode == 0, 'Deployment command failed; inspect local service status')
+    return result.stdout.decode('utf-8').strip()
 
 
 def request(base, path, payload=None, headers=None):
@@ -59,7 +64,7 @@ def run(base, decision, portfolio, scenario):
     payload = {'schemaVersion': '1.0.0', 'decisionVersion': decision['version'],
                'portfolioSnapshotId': portfolio['snapshotId'], 'portfolioVersion': portfolio['version'],
                'dataMode': 'SYNTHETIC', 'scenarioId': scenario['scenarioId']}
-    key = 'g37_' + str(uuid4())
+    key = 'acceptance_' + str(uuid4())
     created = request(base, '/api/decisions/' + decision['decisionId'] + '/runs', payload, {'Idempotency-Key': key})
     duplicate = request(base, '/api/decisions/' + decision['decisionId'] + '/runs', payload, {'Idempotency-Key': key})
     require(created['runId'] == duplicate['runId'], 'Idempotent retry created a different run')
@@ -94,20 +99,36 @@ def main():
     parser.add_argument('--base-url', default='http://127.0.0.1:8080')
     parser.add_argument('--faults', action='store_true')
     parser.add_argument('--restart', action='store_true')
+    parser.add_argument('--project')
+    parser.add_argument('--env-file', default='.env')
+    parser.add_argument('--label', default='G37')
+    parser.add_argument('--output', default='backend/target/g37-deployment-report.json')
     arguments = parser.parse_args()
     base = base_url(arguments.base_url)
+    require(re.fullmatch(r'[A-Za-z0-9_-]{1,40}', arguments.label), 'Invalid acceptance label')
+    if arguments.project:
+        require(re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,62}', arguments.project), 'Invalid Compose project')
+    target = (ROOT / arguments.output).resolve()
+    require(target.is_relative_to((ROOT / 'backend/target').resolve()) and target.suffix == '.json',
+            'Output must be an ignored backend/target JSON artifact')
+    COMPOSE_OPTIONS[:] = ['--env-file', arguments.env_file, '-f', 'compose.yaml']
+    if arguments.project:
+        COMPOSE_OPTIONS.extend(['--project-name', arguments.project])
+    binding = compose('port', 'frontend', '8080')
+    require(binding == '127.0.0.1:' + str(urlsplit(base).port or 80),
+            'Local URL does not match the selected Compose deployment; no faults applied')
     compose('exec', '-T', 'backend', 'python', '-c',
             "import os; assert os.environ.get('INVESTLENS_LLM_ENABLED', 'false').lower() == 'false'")
     ready(base)
     with HTTP.open(base + '/workbench', timeout=10) as response:
         require(response.status == 200 and b'id="app"' in response.read(), 'SPA entry unavailable')
     portfolio_input = json.loads((ROOT / 'backend/src/test/resources/portfolio-create.json').read_text(encoding='utf-8'))
-    portfolio_input['name'] = 'G37 deployment synthetic smoke'
+    portfolio_input['name'] = arguments.label + ' deployment synthetic smoke'
     portfolio = request(base, '/api/portfolios', portfolio_input)
     draft = json.loads((ROOT / 'backend/src/test/resources/decision-ready.json').read_text(encoding='utf-8'))
-    draft['draftId'] = 'draft_g37_' + str(uuid4())
+    draft['draftId'] = 'draft_acceptance_' + str(uuid4())
     draft['inputStatus'] = 'CONFIRMED'
-    draft['inputText'] = 'G37 deployment synthetic smoke; no real investment or external model call'
+    draft['inputText'] = arguments.label + ' deployment synthetic smoke; no real investment or external model call'
     draft['proposedDecision']['portfolioSnapshotId'] = portfolio['snapshotId']
     decision = request(base, '/api/decisions', draft)
     snapshot = request(base, '/api/calculation-snapshots', {
@@ -145,9 +166,25 @@ def main():
         print('PASS: MySQL/backend restart preserves original report and event history')
     history = request(base, '/api/decisions/' + decision['decisionId'] + '/runs')
     require(any(item['runId'] == run_id and item['reportId'] == report['reportId'] for item in history['items']), 'History cannot reopen original report')
-    target = ROOT / 'backend/target/g37-deployment-report.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+    version = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, timeout=10, check=True)
+    changes = subprocess.run(['git', 'status', '--porcelain'], cwd=ROOT, capture_output=True, timeout=10, check=True)
+    receipt = {'schemaVersion': '1.0.0', 'label': arguments.label,
+               'executedAt': datetime.now(timezone.utc).isoformat(), 'sourceCommit': version.stdout.decode().strip(),
+               'workingTreeDirty': bool(changes.stdout.strip()),
+               'project': arguments.project or 'investlens', 'baseUrl': base,
+               'portfolioSnapshotId': portfolio['snapshotId'], 'decisionId': decision['decisionId'],
+               'calculationSnapshotId': snapshot['snapshotId'], 'scenarioId': scenario['scenarioId'],
+               'runId': run_id, 'reportId': report['reportId'], 'snapshotHash': report['snapshotHash'],
+               'dataMode': report['dataMode'], 'status': report['status'], 'generationMode': report['generationMode'],
+               'modelAttempts': completed['budget']['modelAttempts'], 'dataAttempts': completed['budget']['dataAttempts'],
+               'redisFaultPassed': arguments.faults, 'restartPassed': arguments.restart,
+               'reportSha256': hashlib.sha256(target.read_bytes()).hexdigest(),
+               'fixtureSha256': {name: hashlib.sha256((ROOT / 'backend/src/test/resources' / name).read_bytes()).hexdigest()
+                                 for name in ('portfolio-create.json', 'decision-ready.json')},
+               'images': json.loads(compose('images', '--format', 'json'))}
+    target.with_name(target.stem + '-receipt.json').write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding='utf-8')
     print('PASS: deployment smoke complete; only synthetic local records retained')
 
 
