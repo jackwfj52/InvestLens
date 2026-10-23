@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -35,6 +38,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> business(BusinessException exception) {
         return failure(exception.getErrorCode(), exception.getErrorCode().getHttpStatus(),
                 new HttpHeaders(), exception.getErrors(), exception);
+    }
+
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessException.class,
+            CannotCreateTransactionException.class})
+    public ResponseEntity<ApiResponse<Void>> persistence(Exception exception) {
+        return failure(ErrorCode.PERSISTENCE_UNAVAILABLE, List.of(), exception);
     }
 
     @ExceptionHandler(BindException.class)

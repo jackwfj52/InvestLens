@@ -4,6 +4,8 @@
 
 G03 已实现公共响应、异常映射、请求追踪和敏感字段过滤，使用与验收见 [G03 API 基础](../g03-api-foundation.md)；本表中的领域业务接口仍待对应任务实现。框架产生的 405/415 等协议错误保留 HTTP 状态，采用通用 INVALID_REQUEST；容器错误兜底保持 Boot 结构并关闭敏感详情。
 
+G05 已实现 Decision 的 POST、PATCH 和当前 / 指定版本 GET，确认与校验规则及真实数据库验收见 [Decision 实现说明](../g05-decision.md)。Decision 列表、Portfolio 和 Run 端点仍待后续任务。
+
 ## 状态分离与转换
 
 | 维度 | 字段 | 值与含义 |

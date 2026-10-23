@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "draftId": "draft_integration",
+  "inputText": "黄金 ETF 20%、白银 ETF 10%、现金 70%；用现金增配黄金 ETF 到 30%，期限 6 个月。宏观假设尚未验证。",
+  "inputStatus": "READY",
+  "missingFields": [],
+  "proposedDecision": {
+    "baseCurrency": "USD",
+    "portfolioSnapshotId": "portfolio_snapshot_integration_only",
+    "action": {
+      "type": "REALLOCATE",
+      "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+      "fundingInstrumentId": "CASH:USD",
+      "allocationMode": "TARGET_WEIGHT",
+      "targetWeight": "0.3"
+    },
+    "horizon": {"value": 6, "unit": "MONTH"},
+    "constraints": {"maxTargetWeight": "0.3", "maxScenarioLoss": "0.08"},
+    "hypotheses": [{
+      "schemaVersion": "1.0.0",
+      "hypothesisId": "hyp_macro",
+      "statement": "利率变化可能有利于黄金相关资产",
+      "mechanism": "实际利率可能影响机会成本",
+      "testMethod": "需获准数据和明确检验窗口，当前未验证",
+      "supportStatus": "UNVERIFIED"
+    }]
+  }
+}
