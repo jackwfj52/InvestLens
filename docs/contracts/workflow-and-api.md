@@ -14,7 +14,7 @@ G16 已实现内部 Run/Step/Event 状态机、V8 持久字段、事务条件更
 
 G18—G20 已接数据库条件领取、受限后台执行、原子输出检查点及持久预算计量，见 [G18](../g18-task-claiming.md)、[G19](../g19-background-checkpoints.md)、[G20](../g20-call-budgets.md)。G21—G25 接入动态超时、退避、取消、恢复、模型网关与 Planner。
 
-G26—G30 已接白名单工具、冻结 Manifest、Bull/Bear、Judge 候选和结构/引用校验。创建 Run 的原五项字段保持必填，新增可选字符串 scenarioId（不得显式 null）；必须属于同主体、相同决策/组合版本及模式，创建时固定并加入幂等 hash。已有情景复用其显式冲击和计算快照，不自动选最新情景或刷新行情。缺最低确定性结果则 FAILED；最低结果完整但角色不可用时形成 PARTIAL 候选。当前尚未发布报告，结构检查点保存后以 FAILED/REPORT_UNAVAILABLE 明确结束；G31/G32 再完成数值校验和原子发布。验收见 [G30](../g30-report-structure.md)。
+G26—G35 已接白名单工具、冻结 Manifest、Bull/Bear、Judge、结构/引用/数值校验及原子发布。创建 Run 的原五项字段保持必填，新增可选字符串 scenarioId（不得显式 null）；必须属于同主体、相同决策/组合版本及模式，创建时固定并加入幂等 hash。已有情景复用其显式冲击和计算快照，不自动选最新情景或刷新行情。缺最低确定性结果则 FAILED；最低结果完整但角色不可用时发布明确标记的 PARTIAL 报告。已取代 G30 阶段临时 REPORT_UNAVAILABLE 阻断。验收见 [G32](../g32-published-reports.md)、[G35](../g35-progress-recovery.md)。
 
 | 维度 | 字段 | 值与含义 |
 |---|---|---|
@@ -74,6 +74,8 @@ G26—G30 已接白名单工具、冻结 Manifest、Bull/Bear、Judge 候选和�
 | GET /api/runs/{id} | Run（含固定输入、budget、真实状态/阶段） | 200 / 404 |
 | POST /api/runs/{id}/cancel | 空 body；返回 Run。重复取消返回原 Run，已完成/失败时返回既有终态 | 200 / 404 |
 | GET /api/runs/{id}/report | Report；进行中 data 为 Run + `code = RUN_IN_PROGRESS` | 200 / 202；FAILED/CANCELLED 无报告 409 REPORT_UNAVAILABLE |
+| GET /api/runs/{id}/report/figures | G32：已发布后端格式化指标，含 metricId/name/value/unit/currency/displayValue/formulaVersion/evidenceRefs | 200 / 404 / 409 |
+| GET /api/decisions/{id}/runs?limit=20&cursor=... | G32：同主体决策全部固定版本 Run，`{items:[Run],nextCursor}`，创建时间/ID 降序键集分页 | 200 / 400 / 404 |
 | GET /api/runs/{id}/evidence | `{items:[Evidence], gaps:[Gap]}`，按存储许可过滤 | 200 |
 | POST /api/runs/{id}/scenarios | Scenario（服务端核对 Run 和快照）；返回 ScenarioResult | 200 / 409 |
 | GET /api/runs/{id}/events?afterSequence=N | Accept: application/json 时 `{items:[RunEvent], nextSequence}`；text/event-stream 时 SSE | 200 |

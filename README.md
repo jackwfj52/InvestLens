@@ -131,4 +131,12 @@ MySQL 扫描与条件领取提供租约、执行令牌和并发隔离，排队�
 
 已接入 [白名单工具](docs/g26-research-tools.md)、[研究快照冻结](docs/g27-research-freeze.md)、[Bull/Bear 审查](docs/g28-role-reviews.md)、[Judge 与降级候选](docs/g29-report-candidates.md) 及 [结构/引用校验](docs/g30-report-structure.md)。创建 Run 可选指定已保存的 `scenarioId`，固定显式冲击及原计算输入；省略时不会猜测冲击。角色共享冻结 snapshotHash、预算与有限修复。模型默认关闭，用户自行配置 URL 并显式启用后才调用。
 
-当前保存候选及检查点，尚不发布正式报告：结构校验通过后以 `FAILED/REPORT_UNAVAILABLE` 明确结束，保留 `STRUCTURE_VALID` 结果；金融数值校验及报告原子发布分别待 G31/G32。最终后端 321 项、前端 29 项、类型/生产构建和契约检查通过；角色流程使用本机 stub，未宣称真实行情资格或 M3 完成。
+G26—G30 验收时仅保存候选；当前已由 G31/G32 数值校验及原子发布接替临时阻断。角色流程使用本机 stub，未宣称正式行情资格或真实数据 M3 完成。
+
+## 报告、历史与可靠进度（G31—G35）
+
+已接入 [数字闸门与后端渲染](docs/g31-report-numbers.md)、[原子发布与分页历史](docs/g32-published-reports.md)、[报告/Evidence Board 工作台](docs/g33-report-workbench.md)、[持久事件 SSE](docs/g34-durable-events.md) 和 [断线/刷新补读](docs/g35-progress-recovery.md)。模型保持默认关闭、URL 由用户配置；确认输入并计算显式情景后可创建确定性 PARTIAL 报告，未知宏观假设仍未验证。
+
+历史和刷新只读取原 Run/报告；SSE 不可用自动轮询并退避重连，不会隐式取消或创建研究。金融展示值来源于冻结后端指标，违规模型自由文本被阻断。报告、结论、引用、步骤与终态事件同事务保存，后端重启后仍可读取。
+
+验收：后端 335 项、前端 35 项、类型/生产构建、契约拒绝及实际报告 Schema 全通过；实际浏览器验证合成报告、引用跳转、后端重启、刷新恢复和正常 SSE 自动完成。真实行情资格与在线模型闭环仍需后续验收。
