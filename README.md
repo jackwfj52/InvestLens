@@ -49,4 +49,16 @@ Set-Location backend
 .\mvnw.cmd -B -ntp test-compile
 ```
 
-2026-10-23 已使用 JDK 17 执行以上命令，主代码与测试代码编译通过。应用启动及 `contextLoads` 测试还需后续配置数据库连接、Redis 和数据库迁移；编译检查不代表这些集成验证已经通过。本地凭据、IDE 配置和构建产物不纳入 Git。
+2026-10-23 已使用 JDK 17 执行以上命令，主代码与测试代码编译通过。本地凭据、IDE 配置和构建产物不纳入 Git。
+
+## 本地依赖与启动（G04）
+
+需要 Docker（Linux 容器）、Compose v2.20+ 和 JDK 17。在项目根目录执行：
+
+```powershell
+.\scripts\dev.ps1 init   # 首次生成已忽略的 .env，不覆盖已有配置
+.\scripts\dev.ps1 up     # MySQL / Redis 健康后返回
+.\scripts\dev.ps1 run    # 后端使用 dev profile，另开终端执行 test
+```
+
+后端默认 `127.0.0.1:8080`，健康检查为 `/actuator/health/readiness`。运行 `.\scripts\dev.ps1 test` 执行包含真实 MySQL / Redis 的全部后端测试；`.\scripts\dev.ps1 down` 停止依赖并保留 MySQL 数据卷。固定镜像、IDEA 配置、中国大陆网络准备及迁移规则见 [本地开发说明](docs/local-development.md)，实测结果见 [G04 验收记录](docs/g04-infrastructure-acceptance.md)。完整四容器部署仍待 G37。
