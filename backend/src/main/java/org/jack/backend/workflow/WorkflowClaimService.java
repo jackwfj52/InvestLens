@@ -15,8 +15,9 @@ public class WorkflowClaimService {
     private final WorkflowStore store;
     private final CurrentOwner owner;
     private final Clock clock;
-    public WorkflowClaimService(WorkflowMapper mapper, WorkflowStore store, CurrentOwner owner, Clock clock) {
-        this.mapper=mapper;this.store=store;this.owner=owner;this.clock=clock;
+    private final CheckpointIntegrity integrity;
+    public WorkflowClaimService(WorkflowMapper mapper, WorkflowStore store, CurrentOwner owner, Clock clock,CheckpointIntegrity integrity) {
+        this.mapper=mapper;this.store=store;this.owner=owner;this.clock=clock;this.integrity=integrity;
     }
     @Transactional
     public Claim claimNext() {
@@ -25,6 +26,9 @@ public class WorkflowClaimService {
         Run run=store.get(id);
         if(!run.deadlineAt().isAfter(now)) { store.expire(id);return null; }
         Step step=mapper.claimableStep(id,now); if(step==null)return null;
+        if(!integrity.valid(id) || step.attempt()>=3) {
+            store.transition(id,run.revision(),RunStatus.FAILED,run.stage(),step.attempt()>=3?"BUDGET_EXHAUSTED":"SNAPSHOT_MISMATCH");return null;
+        }
         if(run.status()==RunStatus.QUEUED) run=store.transition(id,run.revision(),RunStatus.RUNNING,step.stepKey().stage(),null);
         if(step.status()==StepStatus.RUNNING) step=store.transitionStep(id,step.stepKey(),StepStatus.PENDING,step.executionVersion(),null,null,"LEASE_EXPIRED");
         LocalDateTime lease=now.plusSeconds(45); if(lease.isAfter(run.deadlineAt()))lease=run.deadlineAt();

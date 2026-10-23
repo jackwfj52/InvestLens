@@ -55,6 +55,22 @@ class WorkflowResilienceTests extends WorkflowIntegrationSupport {
         assertThat(count).hasValue(1);
         assertThatThrownBy(()->calls.executeWithRetry(claim,Request.model(Purpose.STANDARD),permit->{throw new UpstreamFailure(ErrorCode.RATE_LIMITED,true,120001);},millis->{throw new AssertionError();})).isInstanceOf(BusinessException.class);
     }
+    @Test void quantCheckpointReusedAfterReclaimAndBudgetNeverResets() throws Exception {
+        var run=queued(fixture());
+        for(int index=0;index<3;index++){var claim=claims.claimNext();checkpoints.save(claim,handler.execute(claim));}
+        var quant=store.step(run.runId(),StepKey.QUANT);var old=claims.claimNext();budgets.reserve(old,Request.model(Purpose.STANDARD));
+        clock.advance(45000);var recovered=claims.claimNext();assertThat(recovered.step().stepKey()).isEqualTo(StepKey.BULL);
+        assertThat(recovered.step().executionVersion()).isGreaterThan(old.step().executionVersion());
+        assertThat(store.step(run.runId(),StepKey.QUANT)).isEqualTo(quant);assertThat(recovered.run().modelAttempts()).isEqualTo(1);
+        assertThat(recovered.run().deadlineAt()).isEqualTo(run.deadlineAt());
+        assertThatThrownBy(()->checkpoints.save(old,handler.execute(old))).isInstanceOf(BusinessException.class);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM step_outputs WHERE run_id=?",Integer.class,run.runId())).isEqualTo(3);
+    }
+    @Test void corruptedOutputStopsRecovery() throws Exception {
+        var run=queued(fixture());var claim=claims.claimNext();checkpoints.save(claim,handler.execute(claim));
+        jdbc.update("UPDATE step_outputs SET output_hash=? WHERE run_id=?","sha256:"+"0".repeat(64),run.runId());
+        assertThat(claims.claimNext()).isNull();assertThat(store.get(run.runId()).errorCode()).isEqualTo("SNAPSHOT_MISMATCH");
+    }
     @Test void cancelApiReturnsTerminalStateAndUnknownRunIs404() throws Exception {
         var run=queued(fixture());var http=java.net.http.HttpClient.newHttpClient();
         var request=java.net.http.HttpRequest.newBuilder(java.net.URI.create("http://127.0.0.1:"+port+"/api/runs/"+run.runId()+"/cancel")).POST(java.net.http.HttpRequest.BodyPublishers.noBody()).build();

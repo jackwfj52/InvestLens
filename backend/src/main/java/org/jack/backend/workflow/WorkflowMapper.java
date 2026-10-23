@@ -6,6 +6,9 @@ import static org.jack.backend.workflow.WorkflowData.*;
 
 @Mapper
 public interface WorkflowMapper {
+    record Checkpoint(String runId,String stepId,long executionVersion,String inputHash,String outputHash,String outputJson) { }
+    @Select("SELECT run_id AS runId,step_id AS stepId,execution_version AS executionVersion,input_hash AS inputHash,output_hash AS outputHash,output_json AS outputJson FROM step_outputs WHERE output_id=#{id}")
+    Checkpoint checkpoint(String id);
     @Insert("INSERT INTO step_outputs (output_id,run_id,step_id,execution_version,input_hash,output_hash,output_json,created_at) VALUES (#{id},#{s.runId},#{s.stepId},#{s.executionVersion},#{s.inputHash},#{hash},#{body},#{s.updatedAt})")
     void insertOutput(@Param("id") String id,@Param("s") Step step,@Param("hash") String hash,@Param("body") String body);
     @Select("SELECT output_json FROM step_outputs WHERE output_id=#{id}")
