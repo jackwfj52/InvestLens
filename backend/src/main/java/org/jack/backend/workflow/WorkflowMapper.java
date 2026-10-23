@@ -6,6 +6,13 @@ import static org.jack.backend.workflow.WorkflowData.*;
 
 @Mapper
 public interface WorkflowMapper {
+    record KeyMapping(String requestHash, String runId) { }
+    @Insert("INSERT INTO idempotency_keys (owner_id,idempotency_key,request_hash) VALUES (#{owner},#{key},#{hash}) ON DUPLICATE KEY UPDATE idempotency_key=idempotency_key")
+    void reserveKey(@Param("owner") String owner,@Param("key") String key,@Param("hash") String hash);
+    @Select("SELECT request_hash AS requestHash,run_id AS runId FROM idempotency_keys WHERE owner_id=#{owner} AND idempotency_key=#{key} FOR UPDATE")
+    KeyMapping key(@Param("owner") String owner,@Param("key") String key);
+    @Update("UPDATE idempotency_keys SET run_id=#{run} WHERE owner_id=#{owner} AND idempotency_key=#{key} AND run_id IS NULL")
+    int bindKey(@Param("owner") String owner,@Param("key") String key,@Param("run") String run);
     String RUN_COLUMNS = "run_id AS runId, decision_id AS decisionId, decision_version AS decisionVersion, portfolio_snapshot_id AS portfolioSnapshotId, portfolio_version AS portfolioVersion, status, stage, data_mode AS dataMode, data_quality AS dataQuality, research_snapshot_id AS researchSnapshotId, snapshot_hash AS snapshotHash, report_id AS reportId, error_code AS errorCode, created_at AS createdAt, started_at AS startedAt, finished_at AS finishedAt, deadline_at AS deadlineAt, data_attempts AS dataAttempts, model_attempts AS modelAttempts, schema_repairs AS schemaRepairs, retry_count AS retryCount, revision, event_sequence AS eventSequence";
     String STEP_COLUMNS = "step_id AS stepId, run_id AS runId, step_key AS stepKey, status, attempt, input_hash AS inputHash, output_ref AS outputRef, lease_until AS leaseUntil, execution_version AS executionVersion, error_code AS errorCode, created_at AS createdAt, updated_at AS updatedAt";
     @Insert("""

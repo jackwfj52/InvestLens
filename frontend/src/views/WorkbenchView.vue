@@ -4,6 +4,7 @@ import { useAsyncRequest } from '../composables/useAsyncRequest.ts'
 import { checkBackend } from '../services/backendStatus.ts'
 import ResearchInputs from '../components/ResearchInputs.vue'
 import RiskWorkbench from '../components/RiskWorkbench.vue'
+import RunControls from '../components/RunControls.vue'
 import type { InputContext } from '../services/riskResearch.ts'
 const context = ref<InputContext>({ ready: false })
 
@@ -40,5 +41,6 @@ onMounted(execute)
   </section>
 
   <ResearchInputs @context="context = $event" />
+  <RunControls :context="context" />
   <RiskWorkbench :context="context" />
 </template>

@@ -8,7 +8,7 @@ G05 已实现 Decision 的 POST、PATCH 和当前 / 指定版本 GET，确认与
 
 G06 已实现 Portfolio 的 POST、PATCH 和当前 / 指定版本 GET，权重、标的登记、不可变快照与哈希见 [Portfolio 实现说明](../g06-portfolio.md)。正式行情白名单资格和 Run 端点仍待对应任务。
 
-G16 已实现内部 Run/Step/Event 状态机、V8 持久字段、事务条件更新和输入/指标关联，见 [状态模型与验收](../g16-workflow-state.md)。本组尚未公开 Run HTTP 路由；G17 再实现事务创建、幂等与查询。内部 Run 有 revision/eventSequence 和 deadlineAt/尝试计数，UTC 数据库时间在未来 API 层按本契约格式封装；G11/G13 原对象 JSON 不因内部关联而改写。
+G16 已实现内部 Run/Step/Event 状态机、V8 持久字段、事务条件更新和输入/指标关联，见 [状态模型与验收](../g16-workflow-state.md)。G17 已公开事务创建、幂等与查询，见 [接口验收](../g17-run-creation.md)。内部 Run 有 revision/eventSequence 和 deadlineAt/尝试计数，API 时间为 UTC 毫秒 Z；G11/G13 原对象 JSON 不因内部关联而改写。
 
 ## 状态分离与转换
 
