@@ -19,6 +19,10 @@ public class MarketQualityInspection {
     }
     public UsEquitiesCalendar.Definition calendar() { return calendar.definition(); }
     public Result inspect(Query query) {
+        return inspectUsing(query,null);
+    }
+    public Result inspect(Query query,long timeoutMillis) { return inspectUsing(query,timeoutMillis); }
+    private Result inspectUsing(Query query,Long timeoutMillis) {
         MarketWindow.validate(query, Clock.systemUTC());
         Candidate candidate = catalog.requireCandidate(query.instrumentId());
         if (!"QUALIFIED".equals(candidate.qualification()) || !candidate.mainlandAccessVerified()
@@ -32,7 +36,7 @@ public class MarketQualityInspection {
                     false, ReturnBasis.UNKNOWN, candidate.instrument(), query.start(), query.end(), null, null, null,
                     0, 0, 0, 0, List.of(), issues, List.of());
         }
-        History history = provider.history(query);
+        History history = timeoutMillis==null?provider.history(query):provider.history(query,timeoutMillis);
         MarketWindow.requireMatching(query, history, candidate);
         return quality.assess(history, Instant.now());
     }

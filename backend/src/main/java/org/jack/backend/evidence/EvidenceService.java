@@ -34,6 +34,17 @@ public class EvidenceService {
     /** Internal entry point; caller cannot supply permissions, prices, owner, quality or arbitrary URLs. */
     @Transactional
     public Snapshot freeze(String portfolioSnapshotId, List<Query> queries, DataMode mode) {
+        return freezeUsing(portfolioSnapshotId,queries,mode,inspection::inspect);
+    }
+    @Transactional
+    public Snapshot freezeCollected(String portfolioSnapshotId,List<Query> queries,DataMode mode,Map<Query,MarketQuality.Result> results) {
+        return freezeUsing(portfolioSnapshotId,queries,mode,query->{
+            var result=results.get(query);
+            if(result==null || !query.instrumentId().equals(result.instrument().instrumentId()) || !query.start().equals(result.start()) || !query.end().equals(result.end()))throw new BusinessException(ErrorCode.SNAPSHOT_MISMATCH);
+            return result;
+        });
+    }
+    private Snapshot freezeUsing(String portfolioSnapshotId,List<Query> queries,DataMode mode,java.util.function.Function<Query,MarketQuality.Result> inspect) {
         var portfolio = portfolios.getSnapshot(portfolioSnapshotId);
         if (mode == null || mode != portfolio.dataMode()) throw new BusinessException(ErrorCode.SNAPSHOT_MISMATCH);
         if (queries == null || queries.size() > 3 || queries.stream().anyMatch(q -> q == null || q.instrumentId() == null)) {
@@ -65,7 +76,7 @@ public class EvidenceService {
                 gaps.add(new Gap("NO_STORE", null, "来源禁止保存证据，无法完整重放"));
                 continue;
             }
-            var result = inspection.inspect(query);
+            var result = inspect.apply(query);
             String evidenceId = "evidence_" + UUID.randomUUID();
             MarketContent content = policy == StoragePolicy.PAYLOAD_ALLOWED && result.calculationAllowed()
                     ? new MarketContent("1.0.0", result.instrument(), result.policyVersion(), result.returnBasis(),
