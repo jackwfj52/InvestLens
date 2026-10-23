@@ -54,6 +54,10 @@ async function perform(action: () => Promise<void>) {
   } finally { busy.value = false }
 }
 function hydratePortfolio(snapshot: Snapshot) {
+  if (snapshot.dataMode !== 'SYNTHETIC' || snapshot.valuationBasis !== 'NORMALIZED' || snapshot.baseCurrency !== 'USD'
+    || snapshot.totalValue !== '100' || snapshot.positions.some(p => !assets.some(a => a.id === p.instrumentId))) {
+    fail('positions', '此表单仅打开已登记的合成、USD 归一化组合')
+  }
   portfolio.value = snapshot; portfolioId.value = snapshot.portfolioId
   form.weights = assets.map(asset => ratioToPercent(snapshot.positions.find(p => p.instrumentId === asset.id)?.weight ?? '0'))
   dirtyPortfolio.value = false
@@ -107,7 +111,9 @@ function draft(): Draft {
     if (!/^[1-9]\d{0,8}$/.test(form.horizon) || Number(form.horizon) > 2147483647) fail('horizon.value', '期限必须为正整数')
     proposal.horizon = { value: Number(form.horizon), unit: form.unit }
   }
-  if (![form.hypothesis, form.mechanism, form.testMethod].every(v => v.trim())) missing.push({ field: 'hypotheses', code: 'REQUIRED', message: '请补齐假设、机制与检验方法' })
+  const hypothesisParts = [form.hypothesis, form.mechanism, form.testMethod].map(v => v.trim())
+  if (hypothesisParts.some(Boolean) && !hypothesisParts.every(Boolean)) fail('hypotheses', '请补齐假设、机制与检验方法；若暂不填写，请清空三个字段后保存待补充输入')
+  if (!hypothesisParts.every(Boolean)) missing.push({ field: 'hypotheses', code: 'REQUIRED', message: '请补齐假设、机制与检验方法' })
   else proposal.hypotheses = [{ schemaVersion: '1.0.0', hypothesisId: decision.value?.hypotheses?.[0]?.hypothesisId ?? 'hyp_manual', statement: form.hypothesis, mechanism: form.mechanism, testMethod: form.testMethod, supportStatus: 'UNVERIFIED' }]
   return { schemaVersion: '1.0.0', draftId: `draft_${crypto.randomUUID()}`, inputText: form.inputText,
     inputStatus: missing.length ? 'NEEDS_INPUT' : 'READY', missingFields: missing, proposedDecision: proposal }
