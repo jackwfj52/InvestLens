@@ -80,3 +80,7 @@ npm run dev
 Java 后端通过受限 Python 适配器取得 AAPL、GLD、SLV 的新浪日线，记录来源、USD/份额、交易日和接收时间。固定资产和 2026 年纽约核心交易日历；质量门槛处理闭合、去重、价格、缺失与公司行动。仅质量合格结果提供可计算序列，不伪造价格或研究成功。
 
 `GET /api/market/instruments` 查询候选资格；`/api/market/quality-policy` 查询日历；`/api/market/quality?instrumentId=ETF:SINA:NYSE_ARCA:GLD:USD&start=2026-06-25&end=2026-10-22` 查询禁算原因。当前使用条件、复权/公司行动及真实大陆网络资格尚未确认，生产白名单为空，普通行情研究入口明确阻断。实现与在线摘要见 [G09](docs/g09-market-provider.md)、[G10](docs/g10-market-quality.md)，适配器运行方式见 [说明](scripts/market/README.md)。
+
+## 证据与计算输入（G11）
+
+证据按服务端许可保存，独立计算快照固定组合版本及规范行情输入，提供稳定哈希与数据库重读。METADATA_ONLY 不保存价格或价格哈希，NO_STORE 只留下缺口；输入无法完整保留时明确不可重放。实现、读取接口和验收见 [G11 证据与快照](docs/g11-evidence-snapshots.md)。

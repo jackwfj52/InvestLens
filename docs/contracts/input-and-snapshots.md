@@ -56,6 +56,8 @@
 
 ## 哈希规范：`investlens-canonical-json-v1`
 
+G11 的 Run 前置实现使用独立 `CalculationSnapshot`：`schemaVersion / snapshotId / hashAlgorithm / engineVersion / portfolioRef / dataMode / createdAt / inputHash / replayable / marketInputs / gaps`。marketInputs 包含 instrumentId、evidenceRef、quality、inputHash、payloadRef；不可保存或不可计算的输入不产生价格哈希。对应独立证据 runId/displayId 暂为空，不满足发布 Evidence 的 Run 绑定条件。读取路由、保存策略及精确哈希封装见 [G11 实现契约](../g11-evidence-snapshots.md)，G27 再形成完整 ResearchSnapshot/Manifest。
+
 1. 固定 Schema 版本，拒绝未知字段、重复 JSON key 和非有限数；金融小数在进入哈希前转换成 README 约定的规范字符串。对象按 key 的 Unicode 码点升序；不执行 Unicode 归一化；JSON 无额外空白，保留非 ASCII，UTF-8 无 BOM，不转义 `/`。字符串的引号和反斜杠分别转义为 `\"` 和 `\\`；控制字符优先使用 `\b/\t/\n/\f/\r`，其他 U+0000—U+001F 用小写 `\u00xx`；拒绝未配对代理码点。整数只用十进制，无浮点 JSON number。
 2. 集合先排序：positions/shocks 按 instrumentId；Manifest instruments 按 instrumentId、evidence 按 evidenceId、marketInputs 按 evidenceRef、metrics 按 metricId；gaps 按 code、ref（空在前）。计划步骤、假设、论点和文本数组保持原顺序。
 3. 哈希为小写 `sha256:<64 hex>`，版本固定在 `hashAlgorithm = investlens-canonical-json-v1`。
