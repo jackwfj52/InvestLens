@@ -58,6 +58,21 @@ public class CallBudgetService {
         return !timedOut;
     }
     @Transactional
+    public long dispatchTimeout(Claim claim,Permit permit) {
+        beforeDispatch(claim,permit);
+        return Math.max(1,Duration.between(now(),permit.expiresAt()).toMillis());
+    }
+    @Transactional
+    public void requireActive(Claim claim) { claims.requireLive(claim); }
+    @Transactional
+    public void beforeBackoff(Claim claim,long delayMillis) {
+        claims.requireLive(claim);
+        var run=store.get(claim.run().runId());
+        var step=store.step(run.runId(),claim.step().stepKey());
+        if(delayMillis<0 || run.retryCount()>=2 || !now().plusNanos(Math.multiplyExact(delayMillis,1_000_000)).isBefore(run.deadlineAt())
+                || !now().plusNanos(Math.multiplyExact(delayMillis,1_000_000)).isBefore(step.leaseUntil()))throw new BusinessException(ErrorCode.BUDGET_EXHAUSTED);
+    }
+    @Transactional
     public void beforeDispatch(Claim claim,Permit permit) {
         claims.requireLive(claim);
         if(!now().isBefore(permit.expiresAt()))throw new BusinessException(ErrorCode.BUDGET_EXHAUSTED);

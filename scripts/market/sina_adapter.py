@@ -44,10 +44,12 @@ def price(value):
         raise probe.ProbeError('INVALID_PRICE') from None
 
 
-def fetch_history(symbol, start, end, node='node'):
-    summary, raw = probe.transport(f'https://finance.sina.com.cn/staticdata/us/{symbol}', timeout=8)
+def fetch_history(symbol, start, end, node='node', timeout=8):
+    summary, raw = probe.transport(f'https://finance.sina.com.cn/staticdata/us/{symbol}', timeout=timeout)
     if summary['failureCode']:
-        raise probe.ProbeError(summary['failureCode'])
+        error = probe.ProbeError(summary['failureCode'])
+        error.retry_after = summary.get('retryAfter')
+        raise error
     if not raw:
         raise probe.ProbeError('NO_HISTORY')
     rows = probe.decode_sina_rows(raw, symbol, start, end, node)
@@ -62,19 +64,23 @@ def fetch_history(symbol, start, end, node='node'):
 def main():
     args = argparse.ArgumentParser()
     args.add_argument('--node', default='node')
+    args.add_argument('--timeout-ms', type=int, default=8000)
     args.add_argument('--summary-only', action='store_true', help='No prices in diagnostic output')
     options = args.parse_args()
     result = {'schemaVersion': '1.0.0', 'status': 'ERROR', 'bars': [], 'failureCode': None,
-              'retrievedAt': None}
+              'retrievedAt': None, 'retryAfter': None}
     try:
         raw = sys.stdin.buffer.read(4097)
         if len(raw) > 4096:
             raise probe.ProbeError('INVALID_REQUEST')
         symbol, start, end = request_input(raw)
-        result['bars'] = fetch_history(symbol, start, end, options.node)
+        if not 1 <= options.timeout_ms <= 8000:
+            raise probe.ProbeError('INVALID_REQUEST')
+        result['bars'] = fetch_history(symbol, start, end, options.node, options.timeout_ms / 1000)
         result['status'] = 'OK'
     except probe.ProbeError as error:
         result['failureCode'] = error.code
+        result['retryAfter'] = getattr(error, 'retry_after', None)
     except Exception:
         result['failureCode'] = 'INVALID_RESPONSE'
     result['retrievedAt'] = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')

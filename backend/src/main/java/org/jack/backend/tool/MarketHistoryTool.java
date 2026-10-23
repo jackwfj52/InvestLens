@@ -17,9 +17,13 @@ public class MarketHistoryTool {
     private final MarketQualityService quality;
     public MarketHistoryTool(MarketDataProvider provider, MarketInstrumentCatalog catalog, MarketQualityService quality) { this.provider = provider; this.catalog = catalog; this.quality = quality; }
     public MarketQuality.Result execute(Query query) {
+        return executeInternal(query,null);
+    }
+    public MarketQuality.Result execute(Query query,long timeoutMillis) { return executeInternal(query,timeoutMillis); }
+    private MarketQuality.Result executeInternal(Query query,Long timeoutMillis) {
         MarketWindow.validate(query, Clock.systemUTC());
         Candidate candidate = catalog.requireResearchEligible(query.instrumentId());
-        History history = provider.history(query);
+        History history = timeoutMillis==null?provider.history(query):provider.history(query,timeoutMillis);
         MarketWindow.requireMatching(query, history, candidate);
         MarketQuality.Result result = quality.assess(history, Instant.now());
         if (!result.calculationAllowed()) throw new BusinessException(ErrorCode.DATA_UNUSABLE,
