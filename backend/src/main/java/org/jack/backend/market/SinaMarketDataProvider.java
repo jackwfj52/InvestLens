@@ -53,6 +53,6 @@ public class SinaMarketDataProvider implements MarketDataProvider {
         // Before quality/calendar normalization there is no verified final session timestamp.
         return new History("1.0.0", candidate.instrument(), query.start(), query.end(), "1d",
                 "https://finance.sina.com.cn/staticdata/us/" + candidate.instrument().symbol(), null,
-                wire.retrievedAt(), false, false, candidate.permissions(), wire.bars());
+                wire.retrievedAt(), false, false, candidate.permissions(), wire.bars(), List.of());
     }
 }

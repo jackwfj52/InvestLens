@@ -20,4 +20,12 @@ public final class MarketWindow {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, List.of(ApiError.invalid("window")));
         }
     }
+    public static void requireMatching(Query query, History history, Candidate candidate) {
+        if (history == null || history.instrument() == null || !query.instrumentId().equals(history.instrument().instrumentId())
+                || !query.start().equals(history.start()) || !query.end().equals(history.end())
+                || !candidate.instrument().equals(history.instrument())) {
+            throw new BusinessException(ErrorCode.DATA_UNUSABLE, List.of(
+                    new ApiError("market", "METADATA_MISMATCH", "行情标的、口径或窗口与请求不一致")));
+        }
+    }
 }

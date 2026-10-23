@@ -17,11 +17,13 @@ public final class MarketData {
                             boolean mainlandAccessVerified, Permissions permissions) { }
     public record Query(String instrumentId, LocalDate start, LocalDate end) { }
     public record Bar(LocalDate sessionDate, String open, String high, String low, String close) { }
+    public enum ActionType { SPLIT, DIVIDEND, OTHER }
+    public record CorporateAction(LocalDate sessionDate, ActionType type, boolean handled) { }
     public record History(String schemaVersion, Instrument instrument, LocalDate start, LocalDate end,
                           String interval, String source, String asOf, String retrievedAt,
                           boolean adjustmentVerified, boolean corporateActionsVerified, Permissions permissions,
-                          List<Bar> bars) {
-        public History { bars = List.copyOf(bars); }
+                          List<Bar> bars, List<CorporateAction> corporateActions) {
+        public History { bars = List.copyOf(bars); corporateActions = List.copyOf(corporateActions); }
     }
     public static String timestamp(Instant value) {
         return new java.time.format.DateTimeFormatterBuilder().appendInstant(3).toFormatter().format(value);

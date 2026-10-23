@@ -1,0 +1,69 @@
+{
+  "mainlandAccessVerified" : false,
+  "qualityPolicyVersion" : "market-quality-v1",
+  "schemaVersion" : "1.0.0",
+  "results" : [ {
+    "missingSessions" : [ ],
+    "instrumentId" : "STOCK:SINA:NASDAQ:AAPL:USD",
+    "calculationAllowed" : false,
+    "quality" : "LICENSE_BLOCKED",
+    "retrievedAt" : "2026-10-23T12:09:33.138Z",
+    "issues" : [ {
+      "code" : "LICENSE_BLOCKED",
+      "sessionDate" : null,
+      "blocking" : true
+    }, {
+      "code" : "ADJUSTMENT_UNKNOWN",
+      "sessionDate" : null,
+      "blocking" : true
+    }, {
+      "code" : "CORPORATE_ACTIONS_UNVERIFIED",
+      "sessionDate" : null,
+      "blocking" : true
+    } ],
+    "asOf" : "2026-10-22T20:00:00.000Z",
+    "acceptedCount" : 84
+  }, {
+    "missingSessions" : [ ],
+    "instrumentId" : "ETF:SINA:NYSE_ARCA:GLD:USD",
+    "calculationAllowed" : false,
+    "quality" : "LICENSE_BLOCKED",
+    "retrievedAt" : "2026-10-23T12:09:33.968Z",
+    "issues" : [ {
+      "code" : "LICENSE_BLOCKED",
+      "sessionDate" : null,
+      "blocking" : true
+    }, {
+      "code" : "ADJUSTMENT_UNKNOWN",
+      "sessionDate" : null,
+      "blocking" : true
+    }, {
+      "code" : "CORPORATE_ACTIONS_UNVERIFIED",
+      "sessionDate" : null,
+      "blocking" : true
+    } ],
+    "asOf" : "2026-10-22T20:00:00.000Z",
+    "acceptedCount" : 84
+  }, {
+    "missingSessions" : [ ],
+    "instrumentId" : "ETF:SINA:NYSE_ARCA:SLV:USD",
+    "calculationAllowed" : false,
+    "quality" : "LICENSE_BLOCKED",
+    "retrievedAt" : "2026-10-23T12:09:34.588Z",
+    "issues" : [ {
+      "code" : "LICENSE_BLOCKED",
+      "sessionDate" : null,
+      "blocking" : true
+    }, {
+      "code" : "ADJUSTMENT_UNKNOWN",
+      "sessionDate" : null,
+      "blocking" : true
+    }, {
+      "code" : "CORPORATE_ACTIONS_UNVERIFIED",
+      "sessionDate" : null,
+      "blocking" : true
+    } ],
+    "asOf" : "2026-10-22T20:00:00.000Z",
+    "acceptedCount" : 84
+  } ]
+}

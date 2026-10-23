@@ -8,7 +8,7 @@
 
 完整设计文档见 `docs/InvestLens-项目设计文档.md`，共 24 章，覆盖产品定位、Agent 工作流、Financial Engine、Evidence 机制、系统与数据设计、Docker 部署、云端演进、36h 开发计划及参赛展示。
 
-当前已具备 Decision / Portfolio 的版本化保存、MySQL / Redis 开发环境和 Vue 工作台基础。输入表单、真实行情研究及完整部署仍按开发顺序推进；文档中的后续业务接口和性能目标不表示已完成验收。
+当前已具备 Decision / Portfolio 的版本化保存、MySQL / Redis 开发环境、Vue 输入工作台、行情 Provider 与质量门槛。真实行情源资格、研究计算与完整部署仍按开发顺序推进；文档中的后续业务接口和性能目标不表示已完成验收。
 
 开发顺序与已有代码复用建议见 [开发顺序与 WealthFlow 复用计划](docs/开发顺序与WealthFlow复用计划.md)，包含源码复用清单、阶段依赖与验收点。
 
@@ -19,7 +19,7 @@
 - 用户电脑采用 Docker Compose 部署；MVP 使用模块化单体。
 - 金融数值由真实数据和确定性引擎生成，模型负责组织研究与解释。
 - 默认研究股票、黄金和白银；首版暂以美元计价的美股及贵金属 ETF 为演示口径，现货贵金属另行适配。
-- 股票/ETF 行情源优先验证 Twelve Data 或其他获准来源；FRED 为条件启用的宏观候选，Binance 留作后续 Crypto 扩展。
+- 股票/ETF 行情技术候选为新浪入口 + AKShare 固定解码器，无行情 Key；正式资格与大陆原生网络待核实。Twelve Data 为可选账号路径，FRED 为条件宏观候选，Binance 为条件 Crypto 后备。
 - P0 聚焦股票/贵金属 ETF + 现金的研究闭环，包含简版 Portfolio / Scenario。
 - 微服务、K8s、弹性伸缩与资源调度作为后续 SaaS 演进设计。
 
@@ -73,4 +73,10 @@ npm ci
 npm run dev
 ```
 
-访问 `http://127.0.0.1:5173/workbench`。工作台包含真实连接检查，开发代理默认连接本机 8080 后端；组合 / 决策表单由 G08 接入。`npm run build` 执行类型检查与构建，`npm test` 验证 API 客户端和异步状态。配置、代理验收及大陆网络准备见 [G07 前端说明](docs/g07-frontend.md)。
+访问 `http://127.0.0.1:5173/workbench`。工作台包含真实连接检查、合成组合编辑、决策保存与确认、按 ID 重开及版本冲突提示；开发代理默认连接本机 8080 后端。`npm run build` 执行类型检查与构建，`npm test` 验证客户端、异步状态和精确百分比。配置与大陆网络准备见 [G07 前端说明](docs/g07-frontend.md)，表单验收见 [G08 输入工作台](docs/g08-input-workbench.md)。
+
+## 行情与质量（G09—G10）
+
+Java 后端通过受限 Python 适配器取得 AAPL、GLD、SLV 的新浪日线，记录来源、USD/份额、交易日和接收时间。固定资产和 2026 年纽约核心交易日历；质量门槛处理闭合、去重、价格、缺失与公司行动。仅质量合格结果提供可计算序列，不伪造价格或研究成功。
+
+`GET /api/market/instruments` 查询候选资格；`/api/market/quality-policy` 查询日历；`/api/market/quality?instrumentId=ETF:SINA:NYSE_ARCA:GLD:USD&start=2026-06-25&end=2026-10-22` 查询禁算原因。当前使用条件、复权/公司行动及真实大陆网络资格尚未确认，生产白名单为空，普通行情研究入口明确阻断。实现与在线摘要见 [G09](docs/g09-market-provider.md)、[G10](docs/g10-market-quality.md)，适配器运行方式见 [说明](scripts/market/README.md)。

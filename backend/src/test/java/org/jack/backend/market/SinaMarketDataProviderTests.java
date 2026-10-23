@@ -62,7 +62,7 @@ class SinaMarketDataProviderTests {
     }
     @Test void pendingQualificationCannotLeakPricesToPublicTool() {
         assertThat(catalog.candidates()).hasSize(3).allSatisfy(candidate -> assertThat(candidate.qualification()).isEqualTo("PENDING"));
-        assertThatThrownBy(() -> new MarketHistoryTool(provider, catalog).execute(query)).isInstanceOfSatisfying(BusinessException.class,
+        assertThatThrownBy(() -> new MarketHistoryTool(provider, catalog, new MarketQualityService(new UsEquitiesCalendar())).execute(query)).isInstanceOfSatisfying(BusinessException.class,
                 e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.LICENSE_BLOCKED));
         verifyNoInteractions(transport);
     }

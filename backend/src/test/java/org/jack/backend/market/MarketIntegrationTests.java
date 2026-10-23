@@ -38,4 +38,12 @@ class MarketIntegrationTests {
         assertThat(get("/api/market/history?instrumentId=GLD&start=2026-01-01&end=2026-10-22").body()).contains("window");
         assertThat(get("/api/market/history?instrumentId=GLD&start=invalid&end=2026-10-22").statusCode()).isEqualTo(400);
     }
+    @Test void qualityAndVersionedCalendarAreQueryableWithoutExternalRequests() throws Exception {
+        var quality = get("/api/market/quality?instrumentId=ETF:SINA:NYSE_ARCA:GLD:USD&start=2026-06-25&end=2026-10-22");
+        assertThat(quality.statusCode()).isEqualTo(200);
+        assertThat(quality.body()).contains("market-quality-v1", "LICENSE_BLOCKED", "MAINLAND_ACCESS_UNVERIFIED", "ADJUSTMENT_UNKNOWN", "\"calculationBars\":[]");
+        var calendar = get("/api/market/quality-policy");
+        assertThat(calendar.statusCode()).isEqualTo(200);
+        assertThat(calendar.body()).contains("us-core-2026-v1", "2026-07-03", "2026-11-27", "finalizationDelayMinutes");
+    }
 }
