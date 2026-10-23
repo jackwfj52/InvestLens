@@ -8,7 +8,7 @@
 
 完整设计文档见 `docs/InvestLens-项目设计文档.md`，共 24 章，覆盖产品定位、Agent 工作流、Financial Engine、Evidence 机制、系统与数据设计、Docker 部署、云端演进、36h 开发计划及参赛展示。
 
-当前已有项目设计文档和 IDEA 生成的 Maven 后端骨架，业务功能尚待实现。文档中的业务接口、性能目标和部署操作是后续开发契约。
+当前已具备 Decision / Portfolio 的版本化保存、MySQL / Redis 开发环境和 Vue 工作台基础。输入表单、真实行情研究及完整部署仍按开发顺序推进；文档中的后续业务接口和性能目标不表示已完成验收。
 
 开发顺序与已有代码复用建议见 [开发顺序与 WealthFlow 复用计划](docs/开发顺序与WealthFlow复用计划.md)，包含源码复用清单、阶段依赖与验收点。
 
@@ -62,3 +62,15 @@ Set-Location backend
 ```
 
 后端默认 `127.0.0.1:8080`，健康检查为 `/actuator/health/readiness`。运行 `.\scripts\dev.ps1 test` 执行包含真实 MySQL / Redis 的全部后端测试；`.\scripts\dev.ps1 down` 停止依赖并保留 MySQL 数据卷。固定镜像、IDEA 配置、中国大陆网络准备及迁移规则见 [本地开发说明](docs/local-development.md)，实测结果见 [G04 验收记录](docs/g04-infrastructure-acceptance.md)。完整四容器部署仍待 G37。
+
+## 前端开发（G07）
+
+使用 Node.js 24 LTS 和 npm，在另一个终端执行：
+
+```powershell
+Set-Location frontend
+npm ci
+npm run dev
+```
+
+访问 `http://127.0.0.1:5173/workbench`。工作台包含真实连接检查，开发代理默认连接本机 8080 后端；组合 / 决策表单由 G08 接入。`npm run build` 执行类型检查与构建，`npm test` 验证 API 客户端和异步状态。配置、代理验收及大陆网络准备见 [G07 前端说明](docs/g07-frontend.md)。
