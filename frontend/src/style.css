@@ -71,6 +71,14 @@ input:disabled, select:disabled, textarea:disabled { background: #f3f6f9; }
 .saved-meta { overflow-wrap: anywhere; font-size: 12px; line-height: 1.9; background: #f2f7f9; padding: 12px; border-radius: 6px; }
 .error-text, .field-errors { color: #a74634; }
 .field-errors { font-size: 13px; line-height: 1.9; padding-left: 20px; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 22px 0; }
+.metric-card { background: #f6f9fb; padding: 18px; border: 1px solid #e1e7ee; border-radius: 8px; min-width: 0; }
+.metric-card h3 { margin-top: 0; } .metric-card strong { font-size: 23px; font-weight: 600; }
+.metric-card p, .metric-card details { font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
+.metric-card summary { cursor: pointer; color: #526d83; } .hash-text { overflow-wrap: anywhere; }
+.table-scroll { overflow-x: auto; margin: 20px 0; } table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+caption { text-align: left; padding-bottom: 12px; color: #697d90; } th, td { padding: 12px 10px; border-bottom: 1px solid #e1e7ee; min-width: 90px; }
+.rule-list { font-size: 13px; line-height: 2; padding-left: 20px; }
 @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .input-card, .input-feedback { padding: 22px; } .button-row { flex-wrap: wrap; } }
 @media (prefers-reduced-motion: reduce) { .status-dot.loading { animation: none; } }
 @media (max-width: 900px) { .sidebar { width: 195px; padding: 28px 18px 20px; } .brand { font-size: 18px; } main { padding: 30px 25px; } .outline-label { display: none; } .topbar { padding: 0 25px; } .research-steps li { padding: 0 14px; } footer { padding-left: 25px; padding-right: 25px; } }

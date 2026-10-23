@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useAsyncRequest } from '../composables/useAsyncRequest.ts'
 import { checkBackend } from '../services/backendStatus.ts'
 import ResearchInputs from '../components/ResearchInputs.vue'
+import RiskWorkbench from '../components/RiskWorkbench.vue'
+import type { InputContext } from '../services/riskResearch.ts'
+const context = ref<InputContext>({ ready: false })
 
 const { phase, error, execute } = useAsyncRequest(checkBackend)
 onMounted(execute)
@@ -36,5 +39,6 @@ onMounted(execute)
     </ol>
   </section>
 
-  <ResearchInputs />
+  <ResearchInputs @context="context = $event" />
+  <RiskWorkbench :context="context" />
 </template>

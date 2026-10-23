@@ -38,5 +38,6 @@ export function useAsyncRequest<T>(load: (signal: AbortSignal) => Promise<T>) {
 
   // Cancels only the browser wait; never calls a Run cancellation endpoint.
   onScopeDispose(cancel)
-  return { phase, data, error, execute, cancel }
+  function reset() { cancel(); data.value = null; error.value = null; phase.value = 'idle' }
+  return { phase, data, error, execute, cancel, reset }
 }

@@ -3,6 +3,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ApiError } from '../services/apiClient.ts'
 import { assets, canonicalDecimal, compareDecimal, inputApi, percentToRatio, ratioToPercent, weightsSumToOne } from '../services/researchInputs.ts'
 import type { AllocationMode, DecisionVersion, Draft, Position, Proposal, Snapshot } from '../services/researchInputs.ts'
+import type { InputContext } from '../services/riskResearch.ts'
+const emit = defineEmits<{ context: [value: InputContext] }>()
 
 const portfolio = ref<Snapshot>()
 const decision = ref<DecisionVersion>()
@@ -20,6 +22,11 @@ watch(() => [form.inputText, form.target, form.funding, form.mode, form.allocati
 const canConfirm = computed(() => decision.value && !dirtyDecision.value && !dirtyPortfolio.value && !busy.value
   && decision.value.inputStatus !== 'CONFIRMED' && decision.value.missingFields.length === 0
   && decision.value.portfolioSnapshotId === portfolio.value?.snapshotId)
+watch(() => [portfolio.value, decision.value, dirtyPortfolio.value, dirtyDecision.value, busy.value], () => {
+  emit('context', { portfolio: portfolio.value, decision: decision.value, ready: !!decision.value
+    && decision.value.inputStatus === 'CONFIRMED' && decision.value.portfolioSnapshotId === portfolio.value?.snapshotId
+    && !dirtyPortfolio.value && !dirtyDecision.value && !busy.value })
+}, { immediate: true, flush: 'sync' })
 function fail(field: string, text: string): never { throw new ApiError('VALIDATION_ERROR', 400, text, [{ field, code: 'INVALID_FIELD', message: text }]) }
 function fieldLink(field: string | null): string {
   if (field?.includes('horizon')) return '#field-horizon'
