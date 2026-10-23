@@ -41,7 +41,7 @@ export function subscribeProgress(id: string, receive: (event: RunEvent) => void
   const connect = options.connect ?? connectBrowser
   let cursor = 0, trail: RunEvent[] = [], stopped = false, reading = false, streamVersion = 0, pollVersion = 0, failures = 0, reset = false
   let close: (() => void) | undefined, pollTimer: ReturnType<typeof setTimeout> | undefined, retryTimer: ReturnType<typeof setTimeout> | undefined
-  function persist() { try { storage?.setItem(key, JSON.stringify({ cursor, items: trail })) } catch { /* Continue with the in-memory cursor. */ } }
+  function persist() { try { storage?.setItem(key, JSON.stringify({ cursor, items: trail })) } catch {} }
   function closeStream() { ++streamVersion; close?.(); close = undefined }
   function stop() { stopped = true; ++pollVersion; controller.abort(); closeStream(); clearTimeout(pollTimer); clearTimeout(retryTimer) }
   function accept(value: unknown) {
@@ -104,7 +104,7 @@ export function subscribeProgress(id: string, receive: (event: RunEvent) => void
         trail = item.items as RunEvent[]; cursor = item.cursor; trail.forEach(receive)
       }
     }
-  } catch { /* Invalid or inaccessible storage starts from the first event. */ }
+  } catch {}
   void (async () => {
     if (trail[trail.length - 1]?.type === 'RUN_TERMINATED') { stop(); mode('FINISHED'); finished(); return }
     try { await catchup(); open() } catch { fallback() }

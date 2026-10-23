@@ -27,5 +27,5 @@ export const runApi = {
   create: (intent: RunIntent) => apiClient.post<Run>(`/decisions/${encodeURIComponent(intent.decisionId)}/runs`, intent.request, { idempotencyKey: intent.key }),
   get: (id: string, signal?: AbortSignal) => apiClient.get<Run>(`/runs/${encodeURIComponent(id)}`, { signal }),
 }
-export function rememberRun(id: string) { try { localStorage.setItem('investlens.active-run', id) } catch { /* History remains accessible. */ } }
+export function rememberRun(id: string) { try { localStorage.setItem('investlens.active-run', id) } catch {} }
 export function lastRun(storage?: Pick<Storage, 'getItem'>) { try { const id = (storage ?? localStorage).getItem('investlens.active-run'); return id && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(id) ? id : undefined } catch { return undefined } }
