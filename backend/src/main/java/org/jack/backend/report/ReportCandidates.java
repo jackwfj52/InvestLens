@@ -73,7 +73,7 @@ public class ReportCandidates {
                 "supportStatus","UNVERIFIED","evidenceRefs",List.of(),"metricRefs",List.of(),"reason","缺少获准宏观因果证据，组合规则不能验证宏观假设")));
         report.set("hypothesisAssessments",assessments);report.set("claims",json.valueToTree(all));report.set("verdict",verdict);report.set("metricBundle",frozen.metricBundle());report.set("scenarioResult",frozen.scenarioResult());
         report.set("evidenceRefs",json.valueToTree(new FrozenReferences(frozen).modelEvidence().stream().map(EvidenceData.Evidence::evidenceId).sorted().toList()));report.set("roleResults",json.valueToTree(roleResults));
-        report.set("gaps",json.valueToTree(gaps));report.set("limitations",json.valueToTree(List.of("冲击是用户假设，不代表价格预测","归一化或绝对金额口径以固定组合为准；未考虑交易成本","宏观因果关系未验证；候选尚未经金融数值校验及原子发布")));
+        report.set("gaps",json.valueToTree(gaps));report.set("limitations",json.valueToTree(List.of("冲击是用户假设，不代表价格预测","归一化或绝对金额口径以固定组合为准；未考虑交易成本","宏观因果关系未验证；报告通过校验不代表投资建议")));
         var versions=json.createObjectNode();versions.put("contractVersion","1.0.0");var manifest=frozen.snapshot().get("manifest");
         for(String key:List.of("engineVersion","qualityPolicyVersion","promptVersions","modelConfigVersion"))versions.set(key,manifest.get(key));report.set("versions",versions);
         return new Candidate("CANDIDATE",report,gaps);

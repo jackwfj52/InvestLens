@@ -15,11 +15,17 @@ public class WorkflowCheckpointService {
     private final WorkflowMapper mapper;
     private final WorkflowStore store;
     private final ObjectMapper json;
-    public WorkflowCheckpointService(WorkflowClaimService claims,WorkflowMapper mapper,WorkflowStore store,ObjectMapper json){this.claims=claims;this.mapper=mapper;this.store=store;this.json=json;}
+    private final org.jack.backend.report.ReportService reports;
+    public WorkflowCheckpointService(WorkflowClaimService claims,WorkflowMapper mapper,WorkflowStore store,ObjectMapper json,org.jack.backend.report.ReportService reports){this.claims=claims;this.mapper=mapper;this.store=store;this.json=json;this.reports=reports;}
     @Transactional
     public void save(Claim claim,WorkflowHandler.Result result) {
-        claims.requireLive(claim);
         boolean structureOnly=claim.step().stepKey()==StepKey.VALIDATE && "REPORT_CANDIDATE_VALIDATED".equals(result.output().get("kind"));
+        if(structureOnly && result.failureCode()==null && store.get(claim.run().runId()).reportId()!=null) {
+            var saved=store.step(claim.run().runId(),StepKey.VALIDATE);
+            if(saved.status()==StepStatus.SUCCEEDED && saved.executionVersion()==claim.step().executionVersion()
+                    && CanonicalJson.sha256(json.readTree(mapper.output(saved.outputRef()))).equals(CanonicalJson.sha256(json.valueToTree(result.output()))))return;
+        }
+        claims.requireLive(claim);
         if(claim.step().inputHash()==null || (result.failureCode()==null && result.next()==null && !structureOnly))throw new BusinessException(ErrorCode.INVALID_STATE);
         String outputId="output_"+UUID.randomUUID();String hash=CanonicalJson.sha256(json.valueToTree(result.output()));
         mapper.insertOutput(outputId,claim.step(),hash,json.writeValueAsString(result.output()));
@@ -28,7 +34,7 @@ public class WorkflowCheckpointService {
         if(result.failureCode()!=null) {
             Run run=store.get(claim.run().runId());store.transition(run.runId(),run.revision(),RunStatus.FAILED,run.stage(),result.failureCode());
         } else if(structureOnly) {
-            Run run=store.get(claim.run().runId());store.transition(run.runId(),run.revision(),RunStatus.FAILED,run.stage(),"REPORT_UNAVAILABLE");
+            reports.publish(claim.run().runId(),json.valueToTree(result.output().get("report")));
         } else store.addNextStep(claim.run().runId(),result.next(),hash);
     }
     @Transactional

@@ -20,11 +20,11 @@ class ReportStructureTests extends ResearchPipelineSupport {
         var run=scenarioRun();throughQuant();for(int index=0;index<2;index++){var claim=claims.claimNext();checkpoints.save(claim,handler.execute(claim));}
         var judge=claims.claimNext();var candidate=candidates.assemble(judge,false);checkpoints.save(judge,output(candidate,StepKey.VALIDATE));return new Ready(run.runId(),(ObjectNode)candidate.report());
     }
-    @Test void validCandidateReferencesResolveAndPublicationRemainsBlocked() throws Exception {
+    @Test void validCandidateReferencesResolveAndPublishesAtomically() throws Exception {
         var ready=ready();var valid=validator.validate(ready.runId(),ready.report());
         assertThat(valid.status()).isEqualTo("STRUCTURE_VALID");assertThat(valid.published()).isFalse();assertThat(valid.numericValidationComplete()).isFalse();
         var claim=claims.claimNext();checkpoints.save(claim,handler.execute(claim));
-        var run=store.get(ready.runId());assertThat(run.status()).isEqualTo(RunStatus.FAILED);assertThat(run.errorCode()).isEqualTo("REPORT_UNAVAILABLE");assertThat(run.reportId()).isNull();
+        var run=store.get(ready.runId());assertThat(run.status()).isEqualTo(RunStatus.PARTIAL);assertThat(run.errorCode()).isNull();assertThat(run.reportId()).isNotNull();
         assertThat(store.step(run.runId(),StepKey.VALIDATE).status()).isEqualTo(StepStatus.SUCCEEDED);
         java.nio.file.Files.writeString(java.nio.file.Path.of("target/g30-candidate.json"),json.writeValueAsString(ready.report()));
     }

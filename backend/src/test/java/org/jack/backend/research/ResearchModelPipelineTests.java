@@ -30,7 +30,7 @@ class ResearchModelPipelineTests extends ResearchPipelineSupport {
             return new LlmClient.Reply(json.writeValueAsString(reply),"stub-model","stop",new LlmClient.Usage(4,3,7));
         });
         for(int index=0;index<7;index++){var claim=claims.claimNext();assertThat(claim).isNotNull();checkpoints.save(claim,handler.execute(claim));}
-        assertThat(store.get(run.runId()).status()).isEqualTo(RunStatus.FAILED);assertThat(store.get(run.runId()).errorCode()).isEqualTo("REPORT_UNAVAILABLE");
+        assertThat(store.get(run.runId()).status()).isEqualTo(RunStatus.COMPLETED);assertThat(store.get(run.runId()).errorCode()).isNull();
         assertThat(store.get(run.runId()).modelAttempts()).isEqualTo(4);assertThat(store.get(run.runId()).schemaRepairs()).isZero();assertThat(hashes).hasSize(3).containsOnly(store.get(run.runId()).snapshotHash());
         var validated=json.readTree(workflowMapper.output(store.step(run.runId(),StepKey.VALIDATE).outputRef()));assertThat(validated.get("report").get("status").asString()).isEqualTo("COMPLETED");
         assertThat(validated.get("validation").get("published").asBoolean()).isFalse();verify(client,times(4)).complete(any(),anyLong());verifyNoInteractions(provider);
