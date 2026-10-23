@@ -1,6 +1,8 @@
 # 输入状态、执行状态与 API
 
-这是后续 G03—G06、G16—G23、G32—G35 的实现契约，当前尚无这些接口。共同类型见 [Schema](schemas/contract.schema.json)。
+这是 G03—G06、G16—G23、G32—G35 的实现契约，领域接口随对应任务实现。共同类型见 [Schema](schemas/contract.schema.json)。
+
+G03 已实现公共响应、异常映射、请求追踪和敏感字段过滤，使用与验收见 [G03 API 基础](../g03-api-foundation.md)；本表中的领域业务接口仍待对应任务实现。框架产生的 405/415 等协议错误保留 HTTP 状态，采用通用 INVALID_REQUEST；容器错误兜底保持 Boot 结构并关闭敏感详情。
 
 ## 状态分离与转换
 
