@@ -4,13 +4,15 @@
 
 G03 已实现公共响应、异常映射、请求追踪和敏感字段过滤，使用与验收见 [G03 API 基础](../g03-api-foundation.md)；本表中的领域业务接口仍待对应任务实现。框架产生的 405/415 等协议错误保留 HTTP 状态，采用通用 INVALID_REQUEST；容器错误兜底保持 Boot 结构并关闭敏感详情。
 
-G05 已实现 Decision 的 POST、PATCH 和当前 / 指定版本 GET，确认与校验规则及真实数据库验收见 [Decision 实现说明](../g05-decision.md)。Decision 列表和 Run 端点仍待后续任务。
+G05 已实现 Decision 的 POST、PATCH 和当前 / 指定版本 GET，确认与校验规则及真实数据库验收见 [Decision 实现说明](../g05-decision.md)。Decision 列表仍待后续任务，Run 创建/查询已随 G17 实现。
 
-G06 已实现 Portfolio 的 POST、PATCH 和当前 / 指定版本 GET，权重、标的登记、不可变快照与哈希见 [Portfolio 实现说明](../g06-portfolio.md)。正式行情白名单资格和 Run 端点仍待对应任务。
+G06 已实现 Portfolio 的 POST、PATCH 和当前 / 指定版本 GET，权重、标的登记、不可变快照与哈希见 [Portfolio 实现说明](../g06-portfolio.md)。正式行情白名单资格仍待确认，Run 创建/查询已随 G17 实现。
 
 G16 已实现内部 Run/Step/Event 状态机、V8 持久字段、事务条件更新和输入/指标关联，见 [状态模型与验收](../g16-workflow-state.md)。G17 已公开事务创建、幂等与查询，见 [接口验收](../g17-run-creation.md)。内部 Run 有 revision/eventSequence 和 deadlineAt/尝试计数，API 时间为 UTC 毫秒 Z；G11/G13 原对象 JSON 不因内部关联而改写。
 
 ## 状态分离与转换
+
+G18—G20 已接数据库条件领取、受限后台执行、原子输出检查点及持久预算计量，见 [G18](../g18-task-claiming.md)、[G19](../g19-background-checkpoints.md)、[G20](../g20-call-budgets.md)。当前仅执行固定输入准备及确定性集中度计算，缺模型处理器时 FAILED/PROVIDER_NOT_CONFIGURED，不发布报告。G21 再接传输层动态超时与退避。
 
 | 维度 | 字段 | 值与含义 |
 |---|---|---|
@@ -43,7 +45,7 @@ G16 已实现内部 Run/Step/Event 状态机、V8 持久字段、事务条件更
 
 `RunEvent`：`eventId = runId:sequence`、`runId`、`sequence`（从 1 递增、每 Run 唯一）、`type`（RUN_QUEUED / STEP_STARTED / STEP_SUCCEEDED / STEP_FAILED / RUN_TERMINATED）、`stage`、`status`、`createdAt`、脱敏 `message`。事件消费已提交事实，断线不取消后台任务。缓存、事件推送不可替代 MySQL 事实源。
 
-`budget` 初始上限：deadline = createdAt + 120 秒（排队计入）；单次行情最多 8 秒、单次模型最多 30 秒且不能超过剩余 Run 时间；最多 3 个非现金资产、每资产一个窗口、8 次外部数据尝试；4 次正常模型调用 + 全局最多 1 次 Schema 修复。模型重试同样占最多 5 次模型尝试，总重试最多 2 次，不是每层再加 2 次。attempt、超时、修复、重试和剩余计数持久化，重启不重置；401/403 不重试，429 尊重 Retry-After，预算不足不再调用。具体计量实现留给 G20/G21。
+`budget` 初始上限：deadline = createdAt + 120 秒（排队计入）；单次行情最多 8 秒、单次模型最多 30 秒且不能超过剩余 Run 时间；最多 3 个非现金资产、每资产一个窗口、8 次外部数据尝试；4 次正常模型调用 + 全局最多 1 次 Schema 修复。模型重试同样占最多 5 次模型尝试，总重试最多 2 次，不是每层再加 2 次。attempt、超时、修复、重试和剩余计数持久化，重领不重置。G20 已实现额度、时间 Permit、计量和预算不足阻断；G21 再实现传输超时、401/403 不重试与 429 Retry-After。
 
 ## HTTP 与公共响应
 

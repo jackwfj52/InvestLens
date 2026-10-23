@@ -17,7 +17,10 @@ public abstract class WorkflowIntegrationSupport extends CalculationIntegrationS
     protected final List<String> runIds=new ArrayList<>(), decisionIds=new ArrayList<>();
     protected record Fixture(String decisionId, RunDtos.Create request) { }
     protected Fixture fixture() throws Exception {
-        var p=portfolio(); var draft=(ObjectNode)json.readTree(getClass().getResourceAsStream("/decision-ready.json"));
+        return fixture(portfolio());
+    }
+    protected Fixture fixture(org.jack.backend.portfolio.PortfolioDtos.Snapshot p) throws Exception {
+        var draft=(ObjectNode)json.readTree(getClass().getResourceAsStream("/decision-ready.json"));
         draft.put("inputStatus","CONFIRMED"); ((ObjectNode)draft.get("proposedDecision")).put("portfolioSnapshotId",p.snapshotId());
         var d=decisions.create(json.treeToValue(draft,DecisionDtos.Draft.class)); decisionIds.add(d.decisionId());
         return new Fixture(d.decisionId(),new RunDtos.Create("1.0.0",d.version(),p.snapshotId(),p.version(),p.dataMode()));
@@ -27,6 +30,7 @@ public abstract class WorkflowIntegrationSupport extends CalculationIntegrationS
     }
     @AfterEach void cleanRunRows() {
         runIds.forEach(id->{
+            jdbc.update("DELETE FROM tool_calls WHERE run_id=?",id);jdbc.update("DELETE FROM run_data_windows WHERE run_id=?",id);
             jdbc.update("DELETE FROM step_outputs WHERE run_id=?",id);
             jdbc.update("DELETE FROM idempotency_keys WHERE run_id=?",id);
             jdbc.update("DELETE FROM run_metric_bundles WHERE run_id=?",id);jdbc.update("DELETE FROM run_calculation_inputs WHERE run_id=?",id);

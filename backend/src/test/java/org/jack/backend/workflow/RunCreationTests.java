@@ -57,7 +57,8 @@ class RunCreationTests extends WorkflowIntegrationSupport {
         var response=HttpClient.newHttpClient().send(request,HttpResponse.BodyHandlers.ofString());
         assertThat(response.statusCode()).isEqualTo(202);var data=json.readTree(response.body()).get("data");String id=data.get("runId").asString();runIds.add(id);
         assertThat(response.headers().firstValue("Location")).contains("/api/runs/"+id);
-        assertThat(data.get("createdAt").asString()).matches(".*\\.\\d{3}Z");assertThat(data.get("budget").get("remainingDataAttempts").asInt()).isEqualTo(8);
+        assertThat(data.get("createdAt").asString()).matches(".*\\.\\d{3}Z");assertThat(data.get("budget").get("maxDataAttempts").asInt()).isEqualTo(8);
+        java.nio.file.Files.writeString(java.nio.file.Path.of("target/g17-run.json"),json.writeValueAsString(data));
         assertThat(send("GET","/api/runs/"+id,null).statusCode()).isEqualTo(200);
         assertThat(send("GET","/api/runs/unknown",null).statusCode()).isEqualTo(404);
         var r=store.get(id);store.transition(id,r.revision(),RunStatus.FAILED,null,"TEST");

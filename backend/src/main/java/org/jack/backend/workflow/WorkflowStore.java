@@ -80,6 +80,22 @@ public class WorkflowStore {
         mapper.insertStep(step);return step;
     }
     @Transactional
+    public void expire(String id) {
+        Run run=locked(id);LocalDateTime now=now();
+        if(run.status().terminal())return;
+        if(run.deadlineAt().isAfter(now))throw new BusinessException(ErrorCode.INVALID_STATE);
+        for(Step step:mapper.steps(id)) {
+            if(step.status()!=StepStatus.PENDING && step.status()!=StepStatus.RUNNING)continue;
+            boolean running=step.status()==StepStatus.RUNNING;
+            var failed=new Step(step.stepId(),id,step.stepKey(),running?StepStatus.FAILED:StepStatus.SKIPPED,step.attempt(),step.inputHash(),null,null,
+                    step.executionVersion()+1,"BUDGET_EXHAUSTED",step.createdAt(),now);
+            if(mapper.updateStep(failed,step.status(),step.executionVersion())!=1)throw new BusinessException(ErrorCode.VERSION_CONFLICT);
+            if(running){Run advanced=copy(run,run.status(),run.stage(),run.errorCode(),run.startedAt(),null);saveRun(run,advanced);event(advanced,EventType.STEP_FAILED,run.stage());run=advanced;}
+        }
+        mapper.expireCalls(id,now);
+        transition(id,run.revision(),RunStatus.FAILED,run.stage(),"BUDGET_EXHAUSTED");
+    }
+    @Transactional
     public Step transitionStep(String id, StepKey key, StepStatus next, long token, LocalDateTime leaseUntil, String outputRef, String errorCode) {
         Run run = locked(id);
         if (run.status() != RunStatus.RUNNING && !(run.status() == RunStatus.QUEUED && next == StepStatus.SKIPPED)) throw new BusinessException(ErrorCode.INVALID_STATE);
