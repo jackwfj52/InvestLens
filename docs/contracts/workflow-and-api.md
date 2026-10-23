@@ -12,7 +12,9 @@ G16 已实现内部 Run/Step/Event 状态机、V8 持久字段、事务条件更
 
 ## 状态分离与转换
 
-G18—G20 已接数据库条件领取、受限后台执行、原子输出检查点及持久预算计量，见 [G18](../g18-task-claiming.md)、[G19](../g19-background-checkpoints.md)、[G20](../g20-call-budgets.md)。当前仅执行固定输入准备及确定性集中度计算，缺模型处理器时 FAILED/PROVIDER_NOT_CONFIGURED，不发布报告。G21 再接传输层动态超时与退避。
+G18—G20 已接数据库条件领取、受限后台执行、原子输出检查点及持久预算计量，见 [G18](../g18-task-claiming.md)、[G19](../g19-background-checkpoints.md)、[G20](../g20-call-budgets.md)。G21—G25 接入动态超时、退避、取消、恢复、模型网关与 Planner。
+
+G26—G30 已接白名单工具、冻结 Manifest、Bull/Bear、Judge 候选和结构/引用校验。创建 Run 的原五项字段保持必填，新增可选字符串 scenarioId（不得显式 null）；必须属于同主体、相同决策/组合版本及模式，创建时固定并加入幂等 hash。已有情景复用其显式冲击和计算快照，不自动选最新情景或刷新行情。缺最低确定性结果则 FAILED；最低结果完整但角色不可用时形成 PARTIAL 候选。当前尚未发布报告，结构检查点保存后以 FAILED/REPORT_UNAVAILABLE 明确结束；G31/G32 再完成数值校验和原子发布。验收见 [G30](../g30-report-structure.md)。
 
 | 维度 | 字段 | 值与含义 |
 |---|---|---|

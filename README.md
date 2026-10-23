@@ -125,4 +125,10 @@ MySQL 扫描与条件领取提供租约、执行令牌和并发隔离，排队�
 
 ## 恢复、取消与 Planner（G21—G25）
 
-已接入动态传输超时、Retry-After 有界重试、`POST /api/runs/{id}/cancel`、检查点完整性校验与过期步骤恢复，以及带 usage 的兼容模型网关和严格 Planner。模型默认关闭，URL/模型/API Key 由用户配置；启用方式、边界和验收见 [G21—G25](docs/g21-g25-resilience-and-planner.md)。Research 工具执行与完整报告仍按 G26 后续实现。
+已接入动态传输超时、Retry-After 有界重试、`POST /api/runs/{id}/cancel`、检查点完整性校验与过期步骤恢复，以及带 usage 的兼容模型网关和严格 Planner。模型默认关闭，URL/模型/API Key 由用户配置；启用方式、边界和验收见 [G21—G25](docs/g21-g25-resilience-and-planner.md)。后续研究链路见下一节。
+
+## 研究与报告候选（G26—G30）
+
+已接入 [白名单工具](docs/g26-research-tools.md)、[研究快照冻结](docs/g27-research-freeze.md)、[Bull/Bear 审查](docs/g28-role-reviews.md)、[Judge 与降级候选](docs/g29-report-candidates.md) 及 [结构/引用校验](docs/g30-report-structure.md)。创建 Run 可选指定已保存的 `scenarioId`，固定显式冲击及原计算输入；省略时不会猜测冲击。角色共享冻结 snapshotHash、预算与有限修复。模型默认关闭，用户自行配置 URL 并显式启用后才调用。
+
+当前保存候选及检查点，尚不发布正式报告：结构校验通过后以 `FAILED/REPORT_UNAVAILABLE` 明确结束，保留 `STRUCTURE_VALID` 结果；金融数值校验及报告原子发布分别待 G31/G32。最终后端 321 项、前端 29 项、类型/生产构建和契约检查通过；角色流程使用本机 stub，未宣称真实行情资格或 M3 完成。
