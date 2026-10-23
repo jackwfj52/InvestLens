@@ -65,6 +65,7 @@ G26—G35 已接白名单工具、冻结 Manifest、Bull/Bear、Judge、结构/�
 | POST /api/calculation-snapshots | G13：`{schemaVersion, portfolioSnapshotId, marketInputs:[{instrumentId,start,end}]}`；服务端固定模式与许可，返回独立 CalculationSnapshot（G11） | 201；可保存明确不可重放的缺口 |
 | GET /api/calculation-snapshots/{id} | G11：独立输入快照、来源引用与缺口 | 200 / 404 |
 | GET /api/calculation-snapshots/{id}/inputs | G11：原组合版本和允许保存的规范行情 | 200 / 404 / 422 |
+| POST /api/calculation-snapshots/{id}/replay | G36：`{portfolioSnapshotId}`，绑定同主体、同持仓/币种/金额/原时间的 REPLAY 组合；拒绝合成改标与不完整源，不取实时数据 | 201 / 404 / 409 / 422 |
 | POST /api/metric-bundles | G13：`{schemaVersion, calculationSnapshotId}`；返回独立 MetricBundle，Run/研究绑定字段暂为空 | 201；不可重放/无市场输入为 422；样本不足的单项指标为 NOT_CALCULABLE |
 | GET /api/metric-bundles/{id} | G13：原持久指标、公式版本、参数、样本数及输入哈希 | 200 / 404 |
 | GET /api/metric-policy | G13：年化因子、收益样本门槛、未提供相关性声明 | 200 |
@@ -83,6 +84,8 @@ G26—G35 已接白名单工具、冻结 Manifest、Bull/Bear、Judge、结构/�
 `DecisionSummary` 包含 decisionId、version、inputText 摘要、inputStatus、updatedAt、latestRunId（可空）；游标按 `(createdAt, decisionId)` 稳定倒序。查询不创建 Run。
 
 SSE `id` 使用 eventId，JSON 补读使用 sequence；原生 EventSource 刷新后可用 afterSequence。Last-Event-ID 存在则优先使用它并核对 runId；错误游标返回 400。补读严格 `sequence > cursor`，客户端按 runId/sequence 去重。事件流终态后结束；断线与 AbortSignal 只停止等待，显式取消走 cancel API。
+
+G36：`GET /api/system/resilience` 返回缓存 AVAILABLE/UNAVAILABLE、持久存储和调用预算来源（MYSQL）及安全说明，不返回凭据或服务地址。readiness 依赖 MySQL，Redis 失效只降级缓存；CACHE 不自动回源，REPLAY 仅读取许可完整的固定输入。账户限额与 Run 预算同时受 MySQL 保护。
 
 ## 幂等、版本与错误
 

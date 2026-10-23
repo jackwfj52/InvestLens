@@ -8,7 +8,7 @@
 
 完整设计文档见 `docs/InvestLens-项目设计文档.md`，共 24 章，覆盖产品定位、Agent 工作流、Financial Engine、Evidence 机制、系统与数据设计、Docker 部署、云端演进、36h 开发计划及参赛展示。
 
-当前已具备 Decision / Portfolio 的版本化保存、MySQL / Redis 开发环境、Vue 输入工作台、行情 Provider 与质量门槛。真实行情源资格、研究计算与完整部署仍按开发顺序推进；文档中的后续业务接口和性能目标不表示已完成验收。
+当前已具备版本化输入、确定性金融引擎、持久 Run 工作流、已校验报告、证据/历史工作台、Redis 降级与完整四容器部署。真实行情源资格、在线模型闭环及新环境验收仍待完成，不把合成演示或构建通过等同于全部验收。
 
 开发顺序与已有代码复用建议见 [开发顺序与 WealthFlow 复用计划](docs/开发顺序与WealthFlow复用计划.md)，包含源码复用清单、阶段依赖与验收点。
 
@@ -63,7 +63,7 @@ Set-Location backend
 .\scripts\dev.ps1 run    # 后端使用 dev profile，另开终端执行 test
 ```
 
-后端默认 `127.0.0.1:8080`，健康检查为 `/actuator/health/readiness`。运行 `.\scripts\dev.ps1 test` 执行包含真实 MySQL / Redis 的全部后端测试；`.\scripts\dev.ps1 down` 停止依赖并保留 MySQL 数据卷。固定镜像、IDEA 配置、中国大陆网络准备及迁移规则见 [本地开发说明](docs/local-development.md)，实测结果见 [G04 验收记录](docs/g04-infrastructure-acceptance.md)。完整四容器部署仍待 G37。
+后端默认 `127.0.0.1:8080`，健康检查为 `/actuator/health/readiness`。运行 `.\scripts\dev.ps1 test` 执行包含真实 MySQL / Redis 的全部后端测试；`.\scripts\dev.ps1 down` 停止依赖并保留 MySQL 数据卷。固定镜像、IDEA 配置、中国大陆网络准备及迁移规则见 [本地开发说明](docs/local-development.md)，实测结果见 [G04 验收记录](docs/g04-infrastructure-acceptance.md)。完整应用部署使用下方 G37 入口，开发库与部署库独立。
 
 ## 前端开发（G07）
 
@@ -140,3 +140,20 @@ G26—G30 验收时仅保存候选；当前已由 G31/G32 数值校验及原子�
 历史和刷新只读取原 Run/报告；SSE 不可用自动轮询并退避重连，不会隐式取消或创建研究。金融展示值来源于冻结后端指标，违规模型自由文本被阻断。报告、结论、引用、步骤与终态事件同事务保存，后端重启后仍可读取。
 
 验收：后端 335 项、前端 35 项、类型/生产构建、契约拒绝及实际报告 Schema 全通过；实际浏览器验证合成报告、引用跳转、后端重启、刷新恢复和正常 SSE 自动完成。真实行情资格与在线模型闭环仍需后续验收。
+
+## 缓存降级与完整部署（G36—G37）
+
+[G36](docs/g36-cache-and-modes.md) 接入可选 Redis、许可/版本绑定缓存、single-flight、持久账户限额和明确数据模式。CACHE 不隐式回源，REPLAY 仅使用许可完整的固定快照；默认禁用行情缓存，正式源资格没有自动开放。
+
+需要 Docker Linux 容器和 Compose；源码构建首次需访问镜像仓库、Maven/npm/PyPI 等，不要求宿主安装 Java/Node/Python。在项目根目录执行（已有 `.env` 时跳过 init）：
+
+```powershell
+.\scripts\dev.ps1 init
+.\scripts\deploy.ps1 config
+.\scripts\deploy.ps1 up
+.\scripts\deploy.ps1 status
+```
+
+访问 `http://127.0.0.1:8080/workbench`；端口冲突可配置 APP_PORT。仅前端绑定宿主回环端口，MySQL 命名卷保留原输入/报告，`down` 不删除数据。模型保持默认关闭，URL/模型/Key 由用户配置，构建上下文排除凭据与数据库。详见 [G37 部署与验收](docs/g37-deployment.md)。
+
+本轮后端 **343 项**、前端 **36 项**、类型/生产构建和契约检查通过；镜像实构建、四服务健康、Nginx/SSE、实际停 Redis 后继续发布、MySQL/后端重启保留报告均通过。仍未宣称真实数据 M3、新环境验收或 M4；下一步 G38—G40。
