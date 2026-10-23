@@ -16,7 +16,7 @@ class ReportNumbersTests {
         assertThat(numbers.validate(report).get(0).displayValue()).isEqualTo("-8.50%");
     }
     @Test void rejectsFabricatedAndDisguisedFreeTextNumbers() {
-        for(String text:new String[]{"预期收益87%","收益８７％","收益百分之八十七","上涨三成","收益five percent","盈利壹佰元"}) {
+        for(String text:new String[]{"预期收益87%","收益８７％","收益百分之八十七","上涨三成","收益five percent","盈利壹佰元","预期八十"}) {
             var report=json.createObjectNode();report.putObject("verdict").putArray("unknowns").add(text);
             assertThatThrownBy(()->numbers.validate(report)).isInstanceOf(BusinessException.class);
         }

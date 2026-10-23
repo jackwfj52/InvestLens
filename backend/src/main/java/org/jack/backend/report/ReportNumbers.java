@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public class ReportNumbers {
     public record Figure(String metricId,String name,String value,String unit,String currency,String displayValue,String formulaVersion,List<String> evidenceRefs) { }
     private static final Set<String> TEXT_FIELDS=Set.of("text","conditions","invalidationConditions","unknowns","thesisAssessment","nextChecks","reason","message","limitations");
-    private static final Pattern NUMBER=Pattern.compile("[\\p{N}]|百分|千分|[零〇一二两三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟]+(?:点|成|倍|元|美元|人民币|个百分点)|(?i)(?<![a-z])(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|billion)(?![a-z])");
+    private static final Pattern NUMBER=Pattern.compile("[\\p{N}]|百分|千分|[零〇一二两三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟]{2,}|[零〇一二两三四五六七八九十百千万亿壹贰叁肆伍陆柒捌玖拾佰仟]+(?:点|成|倍|元|美元|人民币|个百分点)|(?i)(?<![a-z])(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|billion)(?![a-z])");
     public List<Figure> validate(JsonNode report) {
         scan(report,false);
         var figures=new ArrayList<Figure>();var ids=new HashSet<String>();

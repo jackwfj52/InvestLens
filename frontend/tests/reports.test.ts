@@ -11,6 +11,7 @@ test('report reopening checks original fixed versions and isolates reference anc
   assert.ok(reportMatches(report, run)); assert.ok(!reportMatches({ ...report, runId: 'other' }, run))
   assert.ok(!reportMatches({ ...report, decisionRef: { decisionId: 'd', version: 3 } }, run))
   assert.notEqual(referenceId('run1', 'e'), referenceId('run2', 'e'))
+  assert.notEqual(referenceId('run-a', 'b'), referenceId('run', 'a-b'))
   assert.ok(terminal('PARTIAL')); assert.ok(!terminal('RUNNING'))
 })
 test('changing explicit scenario creates a separate run intent without mutating the previous one', () => {

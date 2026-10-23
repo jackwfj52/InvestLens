@@ -1,29 +1,40 @@
 <script setup lang="ts">
-import { ref, watch, onScopeDispose } from 'vue'
-import { openProgress } from '../services/progress.ts'
-import type { RunEvent } from '../services/progress.ts'
+import { ref, watch, onScopeDispose, onMounted } from 'vue'
+import { subscribeProgress } from '../services/progress.ts'
+import type { RunEvent, ProgressMode } from '../services/progress.ts'
 import type { InputContext } from '../services/riskResearch.ts'
-import { loadIntent, runApi, runIntent, saveIntent } from '../services/runs.ts'
+import { loadIntent, runApi, runIntent, saveIntent, rememberRun, lastRun } from '../services/runs.ts'
 import type { Run, RunIntent } from '../services/runs.ts'
 const props = defineProps<{ context: InputContext; scenarioId?: string; openedRun?: Run }>()
 const emit = defineEmits<{ run: [value: Run | undefined] }>()
 const run = ref<Run>(), busy = ref(false), error = ref('')
 const events = ref<RunEvent[]>([]), progressError = ref('')
+const connection = ref<ProgressMode>('CONNECTING')
 let closeProgress: (() => void) | undefined
 watch(() => run.value?.runId, id => {
   closeProgress?.(); events.value = []; progressError.value = ''
-  if (!id || ['COMPLETED','PARTIAL','FAILED','CANCELLED'].includes(run.value!.status)) return
-  closeProgress = openProgress(id, event => {
+  if (!id) return
+  rememberRun(id)
+  closeProgress = subscribeProgress(id, event => {
     if (run.value?.runId !== id || events.value.some(saved => saved.sequence === event.sequence)) return
-    events.value.push(event); if (run.value) run.value = { ...run.value, status: event.status, stage: event.stage }
-    if (event.type === 'RUN_TERMINATED') void refresh()
-  }, () => { progressError.value = '事件连接已断开，可手动读取状态。' })
+    events.value = [...events.value, event].slice(-100)
+    if (run.value && !['COMPLETED','PARTIAL','FAILED','CANCELLED'].includes(run.value.status)) run.value = { ...run.value, status: event.status, stage: event.stage }
+  }, state => { connection.value = state; progressError.value = state === 'POLLING' ? '事件连接不可用，正在轮询补读并自动重连；后台任务不受影响。' : '' }, () => { void syncTerminal(id) })
 })
-onScopeDispose(() => closeProgress?.())
-watch(() => props.openedRun, value => { if (value && value.runId !== run.value?.runId) run.value = value })
+const restore = new AbortController()
+onMounted(async () => {
+  const id = lastRun(); if (!id || run.value) return
+  try { const result = await runApi.get(id, restore.signal); if (!run.value && !restore.signal.aborted) run.value = result.data }
+  catch { if (!restore.signal.aborted) error.value = '原任务暂时无法读取，可从历史侧栏重新打开；未自动创建新任务。' }
+})
+async function syncTerminal(id: string) {
+  try { const result = await runApi.get(id, restore.signal); if (run.value?.runId === id) run.value = result.data }
+  catch { if (!restore.signal.aborted && run.value?.runId === id) error.value = '终态已补读，报告状态暂时无法读取，请重试读取任务状态。' }
+}
+onScopeDispose(() => { restore.abort(); closeProgress?.() })
+watch(() => props.openedRun, value => { if (value) run.value = value })
 watch(run, value => emit('run', value))
 let intent: RunIntent | undefined = loadIntent()
-watch(() => [props.context.decision?.decisionId, props.context.decision?.version, props.context.portfolio?.snapshotId], () => { run.value = undefined })
 async function create(rerun = false) {
   if (busy.value) return
   busy.value = true; error.value = ''
@@ -55,6 +66,7 @@ async function refresh() {
     <p v-if="run && (run.decisionId !== context.decision?.decisionId || run.decisionVersion !== context.decision?.version || run.portfolioSnapshotId !== context.portfolio?.snapshotId)" class="hint">正在查看历史固定版本，与当前编辑输入不同，不会覆盖当前输入。</p>
     <p v-if="error" class="error-text" role="alert">{{ error }}</p>
     <p v-if="progressError" class="hint" role="status">{{ progressError }}</p>
+    <p v-if="run" class="quiet" role="status">进度连接：{{ connection }}</p>
     <ol v-if="events.length" class="progress-events"><li v-for="event in events" :key="event.eventId">{{ event.createdAt }} · {{ event.stage ?? '队列' }} · {{ event.type }} · {{ event.status }}</li></ol>
     <div v-if="run" role="status" aria-live="polite">
       <p>任务 {{ run.runId }} · {{ run.dataMode }} · {{ run.status }} · {{ run.stage ?? '排队中' }}</p>

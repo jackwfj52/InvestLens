@@ -32,4 +32,19 @@ class RunEventTests extends ResearchPipelineSupport {
         assertThat(store.get(run.runId()).status()).isEqualTo(WorkflowData.RunStatus.QUEUED);throughQuant();
         assertThat(store.get(run.runId()).researchSnapshotId()).isNotNull();store.cancel(run.runId());
     }
+    @Test void lastEventIdOverridesQueryAndRejectsAnotherRunMalformedAndFutureCursors() throws Exception {
+        var run=scenarioRun();
+        for(int index=0;index<3;index++) {
+            var claim=claims.claimNext();assertThat(claim).describedAs("step %s; current run %s",index,store.get(run.runId())).isNotNull();
+            assertThat(claim.run().runId()).isEqualTo(run.runId());checkpoints.save(claim,handler.execute(claim));
+        }
+        store.cancel(run.runId());
+        for(String cursor:new String[]{"other:1",run.runId()+":0",run.runId()+":-1",run.runId()+":01",run.runId()+":999999",run.runId()+":1:2"}) {
+            var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/runs/"+run.runId()+"/events")).header("Last-Event-ID",cursor).GET().build();
+            assertThat(HttpClient.newHttpClient().send(request,HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(400);
+        }
+        var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/runs/"+run.runId()+"/events?afterSequence=invalid")).header("Last-Event-ID",run.runId()+":2").header("Accept","text/event-stream").GET().build();
+        var response=HttpClient.newHttpClient().send(request,HttpResponse.BodyHandlers.ofString());assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("id:"+run.runId()+":3").doesNotContain("id:"+run.runId()+":2\n");
+    }
 }

@@ -25,5 +25,7 @@ export function loadIntent(storage?: Pick<Storage, 'getItem'>): RunIntent | unde
 export function saveIntent(intent: RunIntent) { try { localStorage.setItem(storageKey, JSON.stringify(intent)) } catch { /* In-memory intent remains reusable. */ } }
 export const runApi = {
   create: (intent: RunIntent) => apiClient.post<Run>(`/decisions/${encodeURIComponent(intent.decisionId)}/runs`, intent.request, { idempotencyKey: intent.key }),
-  get: (id: string) => apiClient.get<Run>(`/runs/${encodeURIComponent(id)}`),
+  get: (id: string, signal?: AbortSignal) => apiClient.get<Run>(`/runs/${encodeURIComponent(id)}`, { signal }),
 }
+export function rememberRun(id: string) { try { localStorage.setItem('investlens.active-run', id) } catch { /* History remains accessible. */ } }
+export function lastRun(storage?: Pick<Storage, 'getItem'>) { try { const id = (storage ?? localStorage).getItem('investlens.active-run'); return id && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(id) ? id : undefined } catch { return undefined } }

@@ -180,5 +180,5 @@ onMounted(async () => {
   <section v-if="message || errors.length" class="card input-feedback" aria-live="polite">
     <p v-if="message" role="status">{{ message }}</p><div v-if="errors.length" role="alert"><p v-if="conflict">版本已被其他页面修改。请先复制未保存内容，再重新读取最新版本后修订。</p><ul class="field-errors"><li v-for="(error, i) in errors" :key="i"><a :href="fieldLink(error.field)">{{ error.field ? `${error.field}：` : '' }}{{ error.message }} ↗</a></li></ul><small v-if="traceId">追踪 ID：{{ traceId }}</small></div>
   </section>
-  <p class="hint">研究运行接口尚未接入。保存和确认仅记录输入，不会生成研究结果。</p>
+  <p class="hint">保存和确认仅记录输入；计算显式情景后，可在后台研究区创建固定版本的研究任务。</p>
 </template>

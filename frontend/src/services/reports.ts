@@ -20,7 +20,7 @@ export interface Report {
 }
 export interface EvidenceBoard { items: (Evidence & { displayId: string; type: string; storagePolicy: string; modelInputAllowed: boolean })[]; gaps: Gap[] }
 export const terminal = (status: string) => ['COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED'].includes(status)
-export const referenceId = (runId: string, id: string) => `ref-${encodeURIComponent(runId)}-${encodeURIComponent(id)}`
+export const referenceId = (runId: string, id: string) => `ref-${runId.length}-${runId}-${id}`
 export function reportMatches(report: Report, run: Run) {
   return report.runId === run.runId && report.reportId === run.reportId && report.decisionRef.decisionId === run.decisionId
     && report.decisionRef.version === run.decisionVersion && report.portfolioRef.snapshotId === run.portfolioSnapshotId

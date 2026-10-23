@@ -87,6 +87,9 @@ public class ApiExceptionHandler {
         return failure(ErrorCode.INVALID_REQUEST, errors, exception);
     }
 
+    @ExceptionHandler(org.springframework.web.context.request.async.AsyncRequestNotUsableException.class)
+    public void disconnected() { }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> unexpected(Exception exception) {
         if (exception instanceof ErrorResponse protocolError) {

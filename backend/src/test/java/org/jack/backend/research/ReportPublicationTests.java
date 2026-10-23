@@ -39,4 +39,13 @@ class ReportPublicationTests extends ReportStructureTests {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM research_runs WHERE decision_id=?",Integer.class,run.decisionId())).isEqualTo(1);
         assertThat(get("/runs/unknown/report").statusCode()).isEqualTo(404);
     }
+    @Test void forgedNumericValidationFlagCannotPublishUnapprovedTextNumbers() throws Exception {
+        var ready=ready();var claim=claims.claimNext();var invalid=ready.report().deepCopy();
+        invalid.set("limitations",json.valueToTree(java.util.List.of("预期收益87%")));
+        var result=new org.jack.backend.workflow.WorkflowHandler.Result(java.util.Map.of("kind","REPORT_CANDIDATE_VALIDATED","numericValidationComplete",true,"report",invalid),null,null);
+        assertThatThrownBy(()->checkpoints.save(claim,result)).isInstanceOf(org.jack.backend.common.exception.BusinessException.class);
+        assertThat(store.get(ready.runId()).reportId()).isNull();assertThat(store.step(ready.runId(),StepKey.VALIDATE).status()).isEqualTo(StepStatus.RUNNING);
+        checkpoints.fail(claim,"MODEL_OUTPUT_INVALID");assertThat(store.get(ready.runId()).status()).isEqualTo(RunStatus.FAILED);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM reports WHERE run_id=?",Integer.class,ready.runId())).isZero();
+    }
 }
