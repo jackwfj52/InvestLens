@@ -3,8 +3,11 @@ import { ref, watch } from 'vue'
 import type { InputContext } from '../services/riskResearch.ts'
 import { loadIntent, runApi, runIntent, saveIntent } from '../services/runs.ts'
 import type { Run, RunIntent } from '../services/runs.ts'
-const props = defineProps<{ context: InputContext }>()
+const props = defineProps<{ context: InputContext; scenarioId?: string; openedRun?: Run }>()
+const emit = defineEmits<{ run: [value: Run | undefined] }>()
 const run = ref<Run>(), busy = ref(false), error = ref('')
+watch(() => props.openedRun, value => { if (value && value.runId !== run.value?.runId) run.value = value })
+watch(run, value => emit('run', value))
 let intent: RunIntent | undefined = loadIntent()
 watch(() => [props.context.decision?.decisionId, props.context.decision?.version, props.context.portfolio?.snapshotId], () => { run.value = undefined })
 async function create(rerun = false) {
@@ -12,7 +15,7 @@ async function create(rerun = false) {
   busy.value = true; error.value = ''
   const context = props.context
   try {
-    intent = runIntent(context, rerun ? undefined : intent); saveIntent(intent)
+    intent = runIntent(context, rerun ? undefined : intent, undefined, props.scenarioId); saveIntent(intent)
     const result = await runApi.create(intent)
     if (props.context.decision?.decisionId === result.data.decisionId && props.context.decision.version === result.data.decisionVersion
       && props.context.portfolio?.snapshotId === result.data.portfolioSnapshotId) run.value = result.data
@@ -30,10 +33,12 @@ async function refresh() {
 <template>
   <section class="card" aria-labelledby="run-title" :aria-busy="busy">
     <h2 id="run-title">后台研究任务</h2>
-    <p>任务固定已确认的输入版本。刷新页面或重试创建会复用原任务；后续处理器仍在建设中，当前任务可能因配置缺失而失败。</p>
-    <button :disabled="!context.ready || busy" @click="create()">{{ busy ? '处理中…' : '创建 / 恢复本次任务' }}</button>
+    <p>任务固定已确认的输入与已计算的显式冲击。模型默认关闭；禁用角色时仅发布明确标记的部分报告。</p>
+    <p v-if="!scenarioId" class="hint">请先在情景区计算当前输入的显式冲击，再创建研究。</p>
+    <button :disabled="!context.ready || !scenarioId || busy" @click="create()">{{ busy ? '处理中…' : '创建 / 恢复本次任务' }}</button>
     <button class="secondary-button" :disabled="!run || busy" @click="refresh">读取任务状态</button>
-    <button class="secondary-button" :disabled="!context.ready || busy || !run || !['COMPLETED','PARTIAL','FAILED','CANCELLED'].includes(run.status)" @click="create(true)">明确重新运行</button>
+    <button class="secondary-button" :disabled="!context.ready || !scenarioId || busy || !run || !['COMPLETED','PARTIAL','FAILED','CANCELLED'].includes(run.status)" @click="create(true)">使用当前输入明确重新运行</button>
+    <p v-if="run && (run.decisionId !== context.decision?.decisionId || run.decisionVersion !== context.decision?.version || run.portfolioSnapshotId !== context.portfolio?.snapshotId)" class="hint">正在查看历史固定版本，与当前编辑输入不同，不会覆盖当前输入。</p>
     <p v-if="error" class="error-text" role="alert">{{ error }}</p>
     <div v-if="run" role="status" aria-live="polite">
       <p>任务 {{ run.runId }} · {{ run.dataMode }} · {{ run.status }} · {{ run.stage ?? '排队中' }}</p>

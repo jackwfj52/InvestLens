@@ -9,6 +9,7 @@ import MetricCards from './MetricCards.vue'
 import ScenarioComparison from './ScenarioComparison.vue'
 
 const props = defineProps<{ context: InputContext }>()
+const emit = defineEmits<{ scenario: [id: string | undefined] }>()
 const { data: candidates, phase: sourcePhase, error: sourceError, execute: loadSources } = useAsyncRequest(async signal => (await riskApi.candidates(signal)).data)
 const end = new Date(); end.setUTCDate(end.getUTCDate() - 1)
 const start = new Date(end); start.setUTCDate(start.getUTCDate() - 110)
@@ -50,7 +51,7 @@ const { data: scenario, phase: scenarioPhase, error: scenarioError, execute: exe
 })
 function runScenario() { clearTimeout(debounce); resetScenario(); autoScenario = true; void executeScenario() }
 function runCalculation() { resetCalculation(); void calculate() }
-watch(scenario, value => { if (value) { scenarioId.value = value.scenarioId; remember() } })
+watch(scenario, value => { emit('scenario', value && sameScenarioContext(value, props.context) ? value.scenarioId : undefined); if (value) { scenarioId.value = value.scenarioId; remember() } }, { flush: 'sync' })
 watch(calculation, value => { if (value?.bundle) { bundleId.value = value.bundle.bundleId; remember() } })
 watch(() => [props.context.portfolio?.snapshotId, props.context.decision?.decisionId, props.context.decision?.version, props.context.ready], () => {
   autoScenario = false; clearTimeout(debounce); cachedSnapshot = undefined; resetScenario(); resetCalculation()

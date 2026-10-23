@@ -4,10 +4,11 @@ export interface CreateRun { schemaVersion: '1.0.0'; decisionVersion: number; po
 export interface Run { runId: string; decisionId: string; decisionVersion: number; portfolioSnapshotId: string; portfolioVersion: number; dataMode: string; status: string; stage: string | null; errorCode: string | null; reportId: string | null; budget: { maxDataAttempts: number; maxModelAttempts: number; dataAttempts: number; modelAttempts: number; deadlineAt: string } }
 export interface RunIntent { decisionId: string; key: string; request: CreateRun }
 const storageKey = 'investlens.run-intent'
-export function runIntent(context: InputContext, previous?: RunIntent, newKey: () => string = () => crypto.randomUUID()): RunIntent {
+export function runIntent(context: InputContext, previous?: RunIntent, newKey: () => string = () => crypto.randomUUID(), scenarioId?: string): RunIntent {
   const { decision, portfolio, ready } = context
   if (!ready || !decision || !portfolio || decision.inputStatus !== 'CONFIRMED' || decision.portfolioSnapshotId !== portfolio.snapshotId) throw new Error('请先保存并确认匹配的输入版本')
   const request: CreateRun = { schemaVersion: '1.0.0', decisionVersion: decision.version, portfolioSnapshotId: portfolio.snapshotId, portfolioVersion: portfolio.version, dataMode: portfolio.dataMode }
+  if (scenarioId) request.scenarioId = scenarioId
   if (previous?.decisionId === decision.decisionId && JSON.stringify(previous.request) === JSON.stringify(request)) return previous
   return { decisionId: decision.decisionId, key: newKey(), request }
 }

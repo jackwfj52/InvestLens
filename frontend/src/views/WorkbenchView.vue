@@ -5,8 +5,13 @@ import { checkBackend } from '../services/backendStatus.ts'
 import ResearchInputs from '../components/ResearchInputs.vue'
 import RiskWorkbench from '../components/RiskWorkbench.vue'
 import RunControls from '../components/RunControls.vue'
+import ReportPanel from '../components/ReportPanel.vue'
+import ReportHistory from '../components/ReportHistory.vue'
+import type { Run } from '../services/runs.ts'
 import type { InputContext } from '../services/riskResearch.ts'
 const context = ref<InputContext>({ ready: false })
+const scenarioId = ref<string>(), activeRun = ref<Run>(), openedRun = ref<Run>()
+function openRun(run: Run) { openedRun.value = run; activeRun.value = run }
 
 const { phase, error, execute } = useAsyncRequest(checkBackend)
 onMounted(execute)
@@ -41,6 +46,7 @@ onMounted(execute)
   </section>
 
   <ResearchInputs @context="context = $event" />
-  <RunControls :context="context" />
-  <RiskWorkbench :context="context" />
+  <RiskWorkbench :context="context" @scenario="scenarioId = $event" />
+  <RunControls :context="context" :scenario-id="scenarioId" :opened-run="openedRun" @run="activeRun = $event" />
+  <div class="report-layout"><ReportHistory @open="openRun" /><ReportPanel :run="activeRun" /></div>
 </template>
