@@ -74,6 +74,8 @@ public interface WorkflowMapper {
     void insertEvent(Event event);
     @Select("SELECT event_id AS eventId, run_id AS runId, sequence, type, stage, status, created_at AS createdAt, message FROM run_events WHERE run_id = #{id} ORDER BY sequence")
     List<Event> events(@Param("id") String id);
+    @Select("SELECT e.event_id AS eventId,e.run_id AS runId,e.sequence,e.type,e.stage,e.status,e.created_at AS createdAt,e.message FROM run_events e JOIN research_runs r ON r.run_id=e.run_id WHERE e.run_id=#{id} AND r.owner_id=#{owner} AND e.sequence > #{after} ORDER BY e.sequence LIMIT 100")
+    List<Event> eventsAfter(@Param("id") String id,@Param("owner") String owner,@Param("after") long after);
     @Insert("INSERT INTO run_calculation_inputs (run_id, calculation_snapshot_id, portfolio_snapshot_id) VALUES (#{run}, #{snapshot}, #{portfolio})")
     void linkSnapshot(@Param("run") String run, @Param("snapshot") String snapshot, @Param("portfolio") String portfolio);
     @Insert("INSERT INTO run_metric_bundles (run_id, bundle_id, calculation_snapshot_id) VALUES (#{run}, #{bundle}, #{snapshot})")

@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onScopeDispose } from 'vue'
+import { openProgress } from '../services/progress.ts'
+import type { RunEvent } from '../services/progress.ts'
 import type { InputContext } from '../services/riskResearch.ts'
 import { loadIntent, runApi, runIntent, saveIntent } from '../services/runs.ts'
 import type { Run, RunIntent } from '../services/runs.ts'
 const props = defineProps<{ context: InputContext; scenarioId?: string; openedRun?: Run }>()
 const emit = defineEmits<{ run: [value: Run | undefined] }>()
 const run = ref<Run>(), busy = ref(false), error = ref('')
+const events = ref<RunEvent[]>([]), progressError = ref('')
+let closeProgress: (() => void) | undefined
+watch(() => run.value?.runId, id => {
+  closeProgress?.(); events.value = []; progressError.value = ''
+  if (!id || ['COMPLETED','PARTIAL','FAILED','CANCELLED'].includes(run.value!.status)) return
+  closeProgress = openProgress(id, event => {
+    if (run.value?.runId !== id || events.value.some(saved => saved.sequence === event.sequence)) return
+    events.value.push(event); if (run.value) run.value = { ...run.value, status: event.status, stage: event.stage }
+    if (event.type === 'RUN_TERMINATED') void refresh()
+  }, () => { progressError.value = '事件连接已断开，可手动读取状态。' })
+})
+onScopeDispose(() => closeProgress?.())
 watch(() => props.openedRun, value => { if (value && value.runId !== run.value?.runId) run.value = value })
 watch(run, value => emit('run', value))
 let intent: RunIntent | undefined = loadIntent()
@@ -40,6 +54,8 @@ async function refresh() {
     <button class="secondary-button" :disabled="!context.ready || !scenarioId || busy || !run || !['COMPLETED','PARTIAL','FAILED','CANCELLED'].includes(run.status)" @click="create(true)">使用当前输入明确重新运行</button>
     <p v-if="run && (run.decisionId !== context.decision?.decisionId || run.decisionVersion !== context.decision?.version || run.portfolioSnapshotId !== context.portfolio?.snapshotId)" class="hint">正在查看历史固定版本，与当前编辑输入不同，不会覆盖当前输入。</p>
     <p v-if="error" class="error-text" role="alert">{{ error }}</p>
+    <p v-if="progressError" class="hint" role="status">{{ progressError }}</p>
+    <ol v-if="events.length" class="progress-events"><li v-for="event in events" :key="event.eventId">{{ event.createdAt }} · {{ event.stage ?? '队列' }} · {{ event.type }} · {{ event.status }}</li></ol>
     <div v-if="run" role="status" aria-live="polite">
       <p>任务 {{ run.runId }} · {{ run.dataMode }} · {{ run.status }} · {{ run.stage ?? '排队中' }}</p>
       <p>固定决策 v{{ run.decisionVersion }} / 组合 v{{ run.portfolioVersion }} · 行情尝试 {{ run.budget.dataAttempts }} / 8 · 模型尝试 {{ run.budget.modelAttempts }} / 5</p>
