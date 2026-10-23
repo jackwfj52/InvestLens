@@ -2938,6 +2938,10 @@
     "CreateRunRequest": {
       "type": "object",
       "properties": {
+        "scenarioId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+        },
         "schemaVersion": {
           "const": "1.0.0"
         },

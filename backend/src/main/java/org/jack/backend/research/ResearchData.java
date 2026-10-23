@@ -8,4 +8,9 @@ public final class ResearchData {
     public record Tools(String planHash,String calculationSnapshotId,String bundleId,String scenarioId,List<Gap> gaps) {
         public Tools { gaps=List.copyOf(gaps); }
     }
+    public record Frozen(tools.jackson.databind.JsonNode snapshot,tools.jackson.databind.JsonNode decision,tools.jackson.databind.JsonNode portfolio,
+            tools.jackson.databind.JsonNode plan,tools.jackson.databind.JsonNode metricBundle,tools.jackson.databind.JsonNode scenarioResult,
+            List<org.jack.backend.evidence.EvidenceData.Evidence> evidence,tools.jackson.databind.JsonNode instrumentMetadata) {
+        public Frozen { evidence=List.copyOf(evidence); }
+    }
 }

@@ -12,7 +12,12 @@ public final class RunDtos {
     public record Create(@NotBlank @Pattern(regexp = "1\\.0\\.0") String schemaVersion,
                          @NotNull @Positive Integer decisionVersion,
                          @NotBlank @Pattern(regexp = ID) String portfolioSnapshotId,
-                         @NotNull @Positive Integer portfolioVersion, @NotNull DataMode dataMode) { }
+                         @NotNull @Positive Integer portfolioVersion, @NotNull DataMode dataMode,
+                         @Pattern(regexp=ID) @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) String scenarioId) {
+        public Create(String schemaVersion,Integer decisionVersion,String portfolioSnapshotId,Integer portfolioVersion,DataMode dataMode) {
+            this(schemaVersion,decisionVersion,portfolioSnapshotId,portfolioVersion,dataMode,null);
+        }
+    }
     public record Budget(String deadlineAt, int maxInstruments, int maxWindowsPerInstrument, int maxDataAttempts,
                          int maxModelAttempts, int maxSchemaRepairs, int maxRetries,
                          int dataAttempts, int modelAttempts, int schemaRepairs, int retries) { }

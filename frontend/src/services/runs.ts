@@ -1,6 +1,6 @@
 import { apiClient } from './apiClient.ts'
 import type { InputContext } from './riskResearch.ts'
-export interface CreateRun { schemaVersion: '1.0.0'; decisionVersion: number; portfolioSnapshotId: string; portfolioVersion: number; dataMode: string }
+export interface CreateRun { schemaVersion: '1.0.0'; decisionVersion: number; portfolioSnapshotId: string; portfolioVersion: number; dataMode: string; scenarioId?: string }
 export interface Run { runId: string; decisionId: string; decisionVersion: number; portfolioSnapshotId: string; portfolioVersion: number; dataMode: string; status: string; stage: string | null; errorCode: string | null; reportId: string | null; budget: { maxDataAttempts: number; maxModelAttempts: number; dataAttempts: number; modelAttempts: number; deadlineAt: string } }
 export interface RunIntent { decisionId: string; key: string; request: CreateRun }
 const storageKey = 'investlens.run-intent'

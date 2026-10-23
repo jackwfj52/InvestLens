@@ -29,13 +29,19 @@ public abstract class WorkflowIntegrationSupport extends CalculationIntegrationS
         var r=creation.create(f.decisionId(),UUID.randomUUID().toString(),f.request());runIds.add(r.runId());return r;
     }
     @AfterEach void cleanRunRows() {
+        var selectedScenarios=new ArrayList<String>();
         runIds.forEach(id->{
+            selectedScenarios.addAll(jdbc.queryForList("SELECT scenario_id FROM research_run_inputs WHERE run_id=?",String.class,id));
+            evidenceIds.addAll(jdbc.queryForList("SELECT evidence_id FROM research_evidence WHERE run_id=?",String.class,id));
+            var toolRows=jdbc.queryForList("SELECT JSON_UNQUOTE(JSON_EXTRACT(content_json,'$.calculationSnapshotId')) FROM research_tool_results WHERE run_id=?",String.class,id);
+            for(String snapshotId:toolRows)if(!snapshotIds.contains(snapshotId))snapshotIds.add(snapshotId);
             jdbc.update("DELETE FROM tool_calls WHERE run_id=?",id);jdbc.update("DELETE FROM run_data_windows WHERE run_id=?",id);
             jdbc.update("DELETE FROM step_outputs WHERE run_id=?",id);
             jdbc.update("DELETE FROM idempotency_keys WHERE run_id=?",id);
             jdbc.update("DELETE FROM run_metric_bundles WHERE run_id=?",id);jdbc.update("DELETE FROM run_calculation_inputs WHERE run_id=?",id);
             jdbc.update("DELETE FROM run_events WHERE run_id=?",id);jdbc.update("DELETE FROM run_steps WHERE run_id=?",id);jdbc.update("DELETE FROM research_runs WHERE run_id=?",id);
         });
+        selectedScenarios.forEach(id->jdbc.update("DELETE FROM scenario_results WHERE scenario_id=?",id));
         decisionIds.forEach(id->{jdbc.update("DELETE FROM decision_versions WHERE decision_id=?",id);jdbc.update("DELETE FROM decisions WHERE decision_id=?",id);});
     }
 }
