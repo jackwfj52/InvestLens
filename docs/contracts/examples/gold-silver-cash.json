@@ -1,0 +1,809 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "G01 合成贯穿样例：缺字段草稿经用户确认后增配；20/10/70 -> 30/10/60；Judge 缺失产生部分报告。占位代码并非真实白名单。",
+  "draft": {
+    "schemaVersion": "1.0.0",
+    "draftId": "draft_demo",
+    "inputText": "考虑将部分现金转到黄金 ETF；尚未确认研究期限与风险阈值",
+    "inputStatus": "NEEDS_INPUT",
+    "missingFields": [
+      {
+        "field": "horizon",
+        "code": "REQUIRED",
+        "message": "请确认研究期限"
+      },
+      {
+        "field": "constraints",
+        "code": "REQUIRED",
+        "message": "请确认目标仓位与情景损失阈值"
+      }
+    ],
+    "proposedDecision": {
+      "baseCurrency": "USD",
+      "portfolioSnapshotId": "portfolio_snapshot_demo_v1",
+      "action": {
+        "type": "REALLOCATE",
+        "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+        "fundingInstrumentId": "CASH:USD",
+        "allocationMode": "DELTA_PERCENTAGE_POINTS",
+        "deltaPercentagePoints": "10"
+      },
+      "hypotheses": [
+        {
+          "schemaVersion": "1.0.0",
+          "hypothesisId": "hyp_macro",
+          "statement": "利率变化可能有利于黄金相关资产",
+          "mechanism": "实际利率变化可能影响持有黄金相关资产的机会成本",
+          "testMethod": "需获准宏观数据、公布时间和明确检验窗口；当前未执行因果检验",
+          "supportStatus": "UNVERIFIED"
+        }
+      ]
+    }
+  },
+  "decision": {
+    "schemaVersion": "1.0.0",
+    "decisionId": "decision_demo",
+    "version": 1,
+    "inputText": "黄金 ETF 20%、白银 ETF 10%、现金 70%；用现金的 10 个百分点增配黄金 ETF。研究期限 6 个月，目标仓位上限 30%，情景损失上限 8%。利率理由有待验证。",
+    "inputStatus": "CONFIRMED",
+    "confirmedAt": "2026-10-23T00:00:00.000Z",
+    "baseCurrency": "USD",
+    "portfolioSnapshotId": "portfolio_snapshot_demo_v1",
+    "action": {
+      "type": "REALLOCATE",
+      "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+      "fundingInstrumentId": "CASH:USD",
+      "allocationMode": "DELTA_PERCENTAGE_POINTS",
+      "deltaPercentagePoints": "10"
+    },
+    "horizon": {
+      "value": 6,
+      "unit": "MONTH"
+    },
+    "constraints": {
+      "maxTargetWeight": "0.3",
+      "maxScenarioLoss": "0.08"
+    },
+    "hypotheses": [
+      {
+        "schemaVersion": "1.0.0",
+        "hypothesisId": "hyp_macro",
+        "statement": "利率变化可能有利于黄金相关资产",
+        "mechanism": "实际利率变化可能影响持有黄金相关资产的机会成本",
+        "testMethod": "需获准宏观数据、公布时间和明确检验窗口；当前未执行因果检验",
+        "supportStatus": "UNVERIFIED"
+      }
+    ],
+    "missingFields": [],
+    "createdAt": "2026-10-23T00:00:00.000Z"
+  },
+  "equivalentTargetAction": {
+    "type": "REALLOCATE",
+    "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+    "fundingInstrumentId": "CASH:USD",
+    "allocationMode": "TARGET_WEIGHT",
+    "targetWeight": "0.3"
+  },
+  "instruments": [
+    {
+      "schemaVersion": "1.0.0",
+      "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+      "instrumentType": "ETF",
+      "symbol": "DEMO_GOLD",
+      "exchange": "SYNTHETIC_EXCHANGE",
+      "provider": "SYNTHETIC_FIXTURE",
+      "quoteCurrency": "USD",
+      "priceUnit": "CURRENCY_PER_SHARE",
+      "exchangeTimezone": "America/New_York",
+      "calendarId": "SYNTHETIC_US_SESSION",
+      "calendarVersion": "demo-v1",
+      "proxyFor": "GOLD",
+      "adjustment": "UNKNOWN",
+      "adjustmentDescription": "仅合成资产元数据占位；未提供价格序列，不用于历史收益计算"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+      "instrumentType": "ETF",
+      "symbol": "DEMO_SILVER",
+      "exchange": "SYNTHETIC_EXCHANGE",
+      "provider": "SYNTHETIC_FIXTURE",
+      "quoteCurrency": "USD",
+      "priceUnit": "CURRENCY_PER_SHARE",
+      "exchangeTimezone": "America/New_York",
+      "calendarId": "SYNTHETIC_US_SESSION",
+      "calendarVersion": "demo-v1",
+      "proxyFor": "SILVER",
+      "adjustment": "UNKNOWN",
+      "adjustmentDescription": "仅合成资产元数据占位；未提供价格序列，不用于历史收益计算"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "instrumentId": "CASH:USD",
+      "instrumentType": "CASH",
+      "symbol": "USD",
+      "exchange": null,
+      "provider": null,
+      "quoteCurrency": "USD",
+      "priceUnit": "CURRENCY",
+      "exchangeTimezone": null,
+      "calendarId": null,
+      "calendarVersion": null,
+      "proxyFor": null,
+      "adjustment": null,
+      "adjustmentDescription": null
+    }
+  ],
+  "portfolio": {
+    "schemaVersion": "1.0.0",
+    "snapshotId": "portfolio_snapshot_demo_v1",
+    "portfolioId": "portfolio_demo",
+    "version": 1,
+    "hashAlgorithm": "investlens-canonical-json-v1",
+    "baseCurrency": "USD",
+    "valuationBasis": "NORMALIZED",
+    "totalValue": "100",
+    "asOf": "2026-10-23T00:00:00.000Z",
+    "dataMode": "SYNTHETIC",
+    "positions": [
+      {
+        "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+        "quoteCurrency": "USD",
+        "weight": "0.2"
+      },
+      {
+        "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+        "quoteCurrency": "USD",
+        "weight": "0.1"
+      },
+      {
+        "instrumentId": "CASH:USD",
+        "quoteCurrency": "USD",
+        "weight": "0.7"
+      }
+    ],
+    "contentHash": "sha256:40e2b229e37f3fcb400a0e3d26db1f0d9826af57518d5b769388b5ac5aa81a54"
+  },
+  "plan": {
+    "schemaVersion": "1.0.0",
+    "planId": "plan_demo",
+    "runId": "run_demo_g01",
+    "decisionRef": {
+      "decisionId": "decision_demo",
+      "version": 1
+    },
+    "hypothesisIds": [
+      "hyp_macro"
+    ],
+    "dataNeeds": [],
+    "steps": [
+      {
+        "stepKey": "READ_PORTFOLIO",
+        "tool": "Portfolio.getSnapshot",
+        "dependsOn": []
+      },
+      {
+        "stepKey": "DIRECT_SHOCK",
+        "tool": "Quant.runScenario",
+        "dependsOn": [
+          "READ_PORTFOLIO"
+        ]
+      }
+    ],
+    "promptVersion": "unexecuted-demo-v1"
+  },
+  "evidence": [
+    {
+      "schemaVersion": "1.0.0",
+      "evidenceId": "ev_demo_user",
+      "displayId": "E01",
+      "runId": "run_demo_g01",
+      "type": "USER_INPUT",
+      "provider": "USER",
+      "sourceUrl": null,
+      "instrumentId": null,
+      "asOf": "2026-10-23T00:00:00.000Z",
+      "retrievedAt": "2026-10-23T00:00:00.000Z",
+      "quality": "VALID",
+      "dataMode": "SYNTHETIC",
+      "payloadHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+      "storagePolicy": "PAYLOAD_ALLOWED",
+      "payloadRef": "input_demo",
+      "modelInputAllowed": true
+    }
+  ],
+  "calculationInput": {
+    "schemaVersion": "1.0.0",
+    "engineVersion": "direct-shock-demo-v1",
+    "portfolioContentHash": "sha256:40e2b229e37f3fcb400a0e3d26db1f0d9826af57518d5b769388b5ac5aa81a54",
+    "action": {
+      "type": "REALLOCATE",
+      "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+      "fundingInstrumentId": "CASH:USD",
+      "allocationMode": "DELTA_PERCENTAGE_POINTS",
+      "deltaPercentagePoints": "10"
+    },
+    "shocks": [
+      {
+        "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+        "shock": "-0.2"
+      },
+      {
+        "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+        "shock": "-0.25"
+      },
+      {
+        "instrumentId": "CASH:USD",
+        "shock": "0"
+      }
+    ],
+    "marketInputs": [],
+    "parameters": {
+      "valuationBasis": "NORMALIZED",
+      "costsIncluded": false
+    }
+  },
+  "researchSnapshot": {
+    "schemaVersion": "1.0.0",
+    "snapshotId": "research_snapshot_demo",
+    "runId": "run_demo_g01",
+    "hashAlgorithm": "investlens-canonical-json-v1",
+    "decisionRef": {
+      "decisionId": "decision_demo",
+      "version": 1
+    },
+    "portfolioRef": {
+      "snapshotId": "portfolio_snapshot_demo_v1",
+      "version": 1,
+      "contentHash": "sha256:40e2b229e37f3fcb400a0e3d26db1f0d9826af57518d5b769388b5ac5aa81a54"
+    },
+    "dataMode": "SYNTHETIC",
+    "frozenAt": "2026-10-23T00:00:00.000Z",
+    "manifest": {
+      "schemaVersion": "1.0.0",
+      "instruments": [
+        {
+          "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+          "metadataHash": "sha256:60fa5f3ae4fa0d3e7770ea55147f24b738ca0d5477c4793e36e2a90157143f72"
+        },
+        {
+          "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+          "metadataHash": "sha256:280f56e940caffacb7e110ddb8d46547f3aa710574dcd055e7934e94a6a6f1e2"
+        },
+        {
+          "instrumentId": "CASH:USD",
+          "metadataHash": "sha256:b91d2350f191cef8ccbf2f833268ebb25ad42b1e13cf304a91ec9676667e95bf"
+        }
+      ],
+      "evidence": [
+        {
+          "evidenceId": "ev_demo_user",
+          "payloadHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "storagePolicy": "PAYLOAD_ALLOWED"
+        }
+      ],
+      "marketInputs": [],
+      "metrics": [
+        {
+          "metricId": "M_WEIGHT_CHANGE",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "weight-change-v1",
+          "contentHash": "sha256:61c8e24c886cdab0fc024f20b5da453f50e75822299362c92db9354c7af865a5"
+        },
+        {
+          "metricId": "M_RETURN_BEFORE",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "contentHash": "sha256:a863e731552d48f0195302055d0d405ea0f3eb947059ccbefe5fabafafed0dc0"
+        },
+        {
+          "metricId": "M_RETURN_AFTER",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "contentHash": "sha256:96d7bd502695be08c1cfdfcc19cad3adb3450754a9bb08023f221cec3d86eb04"
+        },
+        {
+          "metricId": "M_PNL_BEFORE",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "contentHash": "sha256:da5fe52dd1c828f441f6c1ebafd8eb4c56c1d160d489cb60401eb01efc488ef7"
+        },
+        {
+          "metricId": "M_PNL_AFTER",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "contentHash": "sha256:d8d7305568fbcba723aa7b388d02fc53850ff5dbac6b95b590e57b727f99c736"
+        },
+        {
+          "metricId": "M_RETURN_CHANGE",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "contentHash": "sha256:9968b87c804c2390150e7b12647e7033de929dc3f0beab0481a74ce79700d9fe"
+        },
+        {
+          "metricId": "M_TARGET_WEIGHT_AFTER",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "weight-after-v1",
+          "contentHash": "sha256:e9ae2060e0aa22de9a2ab44caecb93462a5f66257194a86ad1b0ac1fc0517f2e"
+        }
+      ],
+      "planHash": "sha256:7c4a2cefa8ee661f926be56708a8da06a4985a17c8f539ecb36301fade5b58e3",
+      "engineVersion": "direct-shock-demo-v1",
+      "qualityPolicyVersion": "p0-quality-v1",
+      "promptVersions": {
+        "planner": "unexecuted-demo-v1",
+        "bull": "unexecuted-demo-v1",
+        "bear": "unexecuted-demo-v1",
+        "judge": "unexecuted-demo-v1"
+      },
+      "modelConfigVersion": "no-model-demo-v1",
+      "replayable": true,
+      "gaps": [
+        {
+          "code": "MACRO_UNVERIFIED",
+          "ref": "hyp_macro",
+          "message": "缺少获准宏观证据，尚未验证因果论点"
+        },
+        {
+          "code": "MODEL_REVIEW_DISABLED",
+          "ref": null,
+          "message": "本合成样例未执行模型审查"
+        },
+        {
+          "code": "JUDGE_UNAVAILABLE",
+          "ref": null,
+          "message": "验证 Judge 缺失时确定性最低报告的结构"
+        }
+      ]
+    },
+    "snapshotHash": "sha256:2d8ec23c2fbad5892eae5f868fa2b26b736a9abb6734857e63032babf6e1bf57"
+  },
+  "scenario": {
+    "schemaVersion": "1.0.0",
+    "scenarioId": "scenario_demo",
+    "runId": "run_demo_g01",
+    "researchSnapshotId": "research_snapshot_demo",
+    "snapshotHash": "sha256:2d8ec23c2fbad5892eae5f868fa2b26b736a9abb6734857e63032babf6e1bf57",
+    "portfolioSnapshotId": "portfolio_snapshot_demo_v1",
+    "shocks": [
+      {
+        "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+        "shock": "-0.2"
+      },
+      {
+        "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+        "shock": "-0.25"
+      },
+      {
+        "instrumentId": "CASH:USD",
+        "shock": "0"
+      }
+    ],
+    "assumptions": [
+      "人工直接价格冲击，不是历史表现或预测",
+      "总值采用归一化计价单位，现金零冲击为用户假设",
+      "无杠杆、无资金进出，不计费用与滑点"
+    ],
+    "engineVersion": "direct-shock-demo-v1"
+  },
+  "report": {
+    "schemaVersion": "1.0.0",
+    "reportId": "report_demo_partial",
+    "runId": "run_demo_g01",
+    "researchSnapshotId": "research_snapshot_demo",
+    "snapshotHash": "sha256:2d8ec23c2fbad5892eae5f868fa2b26b736a9abb6734857e63032babf6e1bf57",
+    "decisionRef": {
+      "decisionId": "decision_demo",
+      "version": 1
+    },
+    "portfolioRef": {
+      "snapshotId": "portfolio_snapshot_demo_v1",
+      "version": 1,
+      "contentHash": "sha256:40e2b229e37f3fcb400a0e3d26db1f0d9826af57518d5b769388b5ac5aa81a54"
+    },
+    "status": "PARTIAL",
+    "dataMode": "SYNTHETIC",
+    "dataQuality": "PARTIAL",
+    "generationMode": "DETERMINISTIC_FALLBACK",
+    "scope": {
+      "requiredAnalyses": [
+        "REALLOCATION",
+        "DIRECT_PRICE_SHOCK"
+      ],
+      "optionalAnalyses": [
+        "MACRO_CAUSAL_TEST"
+      ]
+    },
+    "hypothesisAssessments": [
+      {
+        "hypothesisId": "hyp_macro",
+        "supportStatus": "UNVERIFIED",
+        "evidenceRefs": [],
+        "metricRefs": [],
+        "reason": "没有获准宏观证据；组合规则不能替代因果检验"
+      }
+    ],
+    "claims": [
+      {
+        "schemaVersion": "1.0.0",
+        "claimId": "claim_risk",
+        "runId": "run_demo_g01",
+        "snapshotHash": "sha256:2d8ec23c2fbad5892eae5f868fa2b26b736a9abb6734857e63032babf6e1bf57",
+        "role": "DETERMINISTIC",
+        "hypothesisId": "hyp_macro",
+        "text": "增配后人工冲击情景下的组合损失扩大；这不验证宏观投资理由",
+        "relation": "CONTEXT",
+        "evidenceRefs": [
+          "ev_demo_user"
+        ],
+        "metricRefs": [
+          "M_RETURN_BEFORE",
+          "M_RETURN_AFTER",
+          "M_RETURN_CHANGE"
+        ],
+        "conditions": [
+          "仅在用户设定的冲击与无成本假设下成立"
+        ],
+        "invalidationConditions": [
+          "组合配置或直接冲击输入改变"
+        ],
+        "unknowns": [
+          "宏观机制仍未验证"
+        ]
+      }
+    ],
+    "verdict": {
+      "schemaVersion": "1.0.0",
+      "verdict": "INSUFFICIENT_EVIDENCE",
+      "thesisAssessment": "已完成用户设定下的调仓与情景算术，宏观假设尚未验证，模型审查缺失",
+      "supportingClaimIds": [],
+      "opposingClaimIds": [],
+      "unknowns": [
+        "缺少宏观证据和模型审查"
+      ],
+      "invalidationConditions": [
+        "输入配置或资金来源改变"
+      ],
+      "nextChecks": [
+        "完成获准行情与模型探测",
+        "为宏观假设补充可用证据与检验方法"
+      ]
+    },
+    "metricBundle": {
+      "schemaVersion": "1.0.0",
+      "bundleId": "bundle_demo",
+      "runId": "run_demo_g01",
+      "researchSnapshotId": "research_snapshot_demo",
+      "snapshotHash": "sha256:2d8ec23c2fbad5892eae5f868fa2b26b736a9abb6734857e63032babf6e1bf57",
+      "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+      "engineVersion": "direct-shock-demo-v1",
+      "metrics": [
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_WEIGHT_CHANGE",
+          "name": "WEIGHT_CHANGE",
+          "status": "CALCULABLE",
+          "value": "10",
+          "unit": "PERCENTAGE_POINT",
+          "currency": null,
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "weight-change-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        },
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_RETURN_BEFORE",
+          "name": "SCENARIO_RETURN_BEFORE",
+          "status": "CALCULABLE",
+          "value": "-0.065",
+          "unit": "RATIO",
+          "currency": null,
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        },
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_RETURN_AFTER",
+          "name": "SCENARIO_RETURN_AFTER",
+          "status": "CALCULABLE",
+          "value": "-0.085",
+          "unit": "RATIO",
+          "currency": null,
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        },
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_PNL_BEFORE",
+          "name": "SCENARIO_PNL_BEFORE",
+          "status": "CALCULABLE",
+          "value": "-6.5",
+          "unit": "BASE_CURRENCY_UNIT",
+          "currency": "USD",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        },
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_PNL_AFTER",
+          "name": "SCENARIO_PNL_AFTER",
+          "status": "CALCULABLE",
+          "value": "-8.5",
+          "unit": "BASE_CURRENCY_UNIT",
+          "currency": "USD",
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        },
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_RETURN_CHANGE",
+          "name": "SCENARIO_RETURN_CHANGE",
+          "status": "CALCULABLE",
+          "value": "-2",
+          "unit": "PERCENTAGE_POINT",
+          "currency": null,
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "direct-shock-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        },
+        {
+          "schemaVersion": "1.0.0",
+          "metricId": "M_TARGET_WEIGHT_AFTER",
+          "name": "TARGET_WEIGHT_AFTER",
+          "status": "CALCULABLE",
+          "value": "0.3",
+          "unit": "RATIO",
+          "currency": null,
+          "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+          "formulaVersion": "weight-after-v1",
+          "parameters": {
+            "annualizationFactor": null,
+            "minimumSamples": null,
+            "valuationBasis": "NORMALIZED",
+            "costsIncluded": false
+          },
+          "sampleWindow": null,
+          "sampleCount": 0,
+          "quality": "VALID",
+          "reason": null,
+          "evidenceRefs": [
+            "ev_demo_user"
+          ]
+        }
+      ]
+    },
+    "scenarioResult": {
+      "schemaVersion": "1.0.0",
+      "scenarioId": "scenario_demo",
+      "runId": "run_demo_g01",
+      "researchSnapshotId": "research_snapshot_demo",
+      "snapshotHash": "sha256:2d8ec23c2fbad5892eae5f868fa2b26b736a9abb6734857e63032babf6e1bf57",
+      "inputHash": "sha256:b8a64083ec396d6ede3f2c3e8c63f8cc093f2a813d0cdd971589b40c1ac31f27",
+      "beforeWeights": [
+        {
+          "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+          "quoteCurrency": "USD",
+          "weight": "0.2"
+        },
+        {
+          "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+          "quoteCurrency": "USD",
+          "weight": "0.1"
+        },
+        {
+          "instrumentId": "CASH:USD",
+          "quoteCurrency": "USD",
+          "weight": "0.7"
+        }
+      ],
+      "afterWeights": [
+        {
+          "instrumentId": "ETF:SYNTHETIC:DEMO_GOLD:USD",
+          "quoteCurrency": "USD",
+          "weight": "0.3"
+        },
+        {
+          "instrumentId": "ETF:SYNTHETIC:DEMO_SILVER:USD",
+          "quoteCurrency": "USD",
+          "weight": "0.1"
+        },
+        {
+          "instrumentId": "CASH:USD",
+          "quoteCurrency": "USD",
+          "weight": "0.6"
+        }
+      ],
+      "metricRefs": [
+        "M_WEIGHT_CHANGE",
+        "M_RETURN_BEFORE",
+        "M_RETURN_AFTER",
+        "M_PNL_BEFORE",
+        "M_PNL_AFTER",
+        "M_RETURN_CHANGE",
+        "M_TARGET_WEIGHT_AFTER"
+      ],
+      "ruleResults": [
+        {
+          "ruleId": "MAX_TARGET_WEIGHT_AFTER",
+          "status": "PASS",
+          "threshold": "0.3",
+          "unit": "RATIO",
+          "metricRefs": [
+            "M_TARGET_WEIGHT_AFTER"
+          ],
+          "reason": null
+        },
+        {
+          "ruleId": "MAX_SCENARIO_LOSS_BEFORE",
+          "status": "PASS",
+          "threshold": "0.08",
+          "unit": "RATIO",
+          "metricRefs": [
+            "M_RETURN_BEFORE"
+          ],
+          "reason": null
+        },
+        {
+          "ruleId": "MAX_SCENARIO_LOSS_AFTER",
+          "status": "FAIL",
+          "threshold": "0.08",
+          "unit": "RATIO",
+          "metricRefs": [
+            "M_RETURN_AFTER"
+          ],
+          "reason": null
+        }
+      ]
+    },
+    "evidenceRefs": [
+      "ev_demo_user"
+    ],
+    "roleResults": {
+      "planner": "DISABLED",
+      "bull": "DISABLED",
+      "bear": "DISABLED",
+      "judge": "MISSING"
+    },
+    "gaps": [
+      {
+        "code": "MACRO_UNVERIFIED",
+        "ref": "hyp_macro",
+        "message": "缺少获准宏观证据，尚未验证因果论点"
+      },
+      {
+        "code": "MODEL_REVIEW_DISABLED",
+        "ref": null,
+        "message": "本合成样例未执行模型审查"
+      },
+      {
+        "code": "JUDGE_UNAVAILABLE",
+        "ref": null,
+        "message": "验证 Judge 缺失时确定性最低报告的结构"
+      }
+    ],
+    "limitations": [
+      "全部为合成协议样例，未执行在线研究",
+      "ETF 为代理资产，不代表贵金属现货报价",
+      "归一化配置与人工冲击不是实际持仓收益或未来预测",
+      "input_demo 指向本文件 calculationInput；其他研究依赖均内嵌，无真实行情 payload"
+    ],
+    "versions": {
+      "contractVersion": "1.0.0",
+      "engineVersion": "direct-shock-demo-v1",
+      "qualityPolicyVersion": "p0-quality-v1",
+      "promptVersions": {
+        "planner": "unexecuted-demo-v1",
+        "bull": "unexecuted-demo-v1",
+        "bear": "unexecuted-demo-v1",
+        "judge": "unexecuted-demo-v1"
+      },
+      "modelConfigVersion": "no-model-demo-v1"
+    },
+    "validatedAt": "2026-10-23T00:00:01.000Z",
+    "publishedAt": "2026-10-23T00:00:01.000Z"
+  },
+  "createRunRequest": {
+    "schemaVersion": "1.0.0",
+    "decisionVersion": 1,
+    "portfolioSnapshotId": "portfolio_snapshot_demo_v1",
+    "portfolioVersion": 1,
+    "dataMode": "SYNTHETIC"
+  },
+  "expected": {
+    "beforeWeights": [
+      "0.2",
+      "0.1",
+      "0.7"
+    ],
+    "afterWeights": [
+      "0.3",
+      "0.1",
+      "0.6"
+    ],
+    "beforeReturn": "-0.065",
+    "afterReturn": "-0.085",
+    "beforePnl": "-6.5",
+    "afterPnl": "-8.5",
+    "returnChangePercentagePoints": "-2",
+    "increasedLoss": "2",
+    "runStatus": "PARTIAL",
+    "hypothesisStatus": "UNVERIFIED",
+    "verdict": "INSUFFICIENT_EVIDENCE"
+  }
+}
